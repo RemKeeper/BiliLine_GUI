@@ -1,0 +1,26 @@
+@font-face {
+    font-family:'LineFont';
+    src: url("/font.ttf") format("truetype");
+}
+
+
+.user {
+    font-size: 40px;
+    font-family:'LineFont' !important;
+    border: 1px solid #ddd;
+    padding: 5px;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    border-radius: 10px;
+}
+
+.user img {
+    border-radius: 50px;
+    width: 50px;
+    height: 50px;
+}
+
+.user div {
+    margin-left: 20px;
+}

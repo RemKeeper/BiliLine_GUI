@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="html">
+<head>
+  <title>队列显示</title>
+  <meta charset="UTF-8">
+  <meta name="referrer" content="never">
+</head>
+<body>
+
+  <div id="GuardLine" class="Line GuardLine">
+    <div class="user Guard">
+    <img src="/img/150w_150h.jpg">
+    <div>
+      <a>#1</a>  
+      <a>如果你看的这些</a>
+    </div>
+  </div>
+  </div>
+
+
+  <div id="GiftLine" class="Line GiftLine">
+    <div class="user Gift">
+    <img src="/img/150w_150h.jpg">  
+    <div>
+      <a>#2</a>
+      <a>说明你的连接异常</a>
+      <a class="GiftPrice">¥50</a>
+    </div>
+  </div>
+  </div>
+
+
+  <div id="NormalLine" class="Line NormalLine">
+    <div class="user normal">
+    <img src="/img/150w_150h.jpg">
+    <div>    
+      <a>#3</a>
+      <a>请联系开发者</a>
+    </div>
+  </div>
+  </div>
+  
+  <script>
+    function CleanAllUser(){
+      let count =document.getElementsByClassName(`user`).length;
+      for (let index = 0; index < count; index++) {
+        document.querySelectorAll(".user")[0].remove()
+      }
+    }
+
+
+    let GuardLineDiv =document.getElementById('GuardLine')
+    let GiftLineDiv =document.getElementById('GiftLine')
+    let NormalLineDiv = document.getElementById('NormalLine')
+    // 重连间隔时间
+    const RECONNECT_INTERVAL = 5000;
+
+
+    // WebSocket实例
+
+    // 连接函数
+    function connect() {
+      CleanAllUser();
+      GetAllUser();
+
+      let socket = new WebSocket('ws://127.0.0.1:100/ws');
+
+      // 处理消息
+      socket.onmessage = (event) => {
+          let ReceiverJson= JSON.parse(event.data)
+          console.log("操作标识码:"+ReceiverJson.OpMessage+"\n"
+                  +"索引:"+ReceiverJson.Index+"\n"
+                  +"队列类型:"+ReceiverJson.LineType+"\n"
+
+                  +"\n通用队列"+"\n\n"
+                  +"用户UID:"+ReceiverJson.Line.Uid+"\n"
+                  +"用户名:"+ReceiverJson.Line.UserName+"\n"
+                  +"用户头像地址:"+ReceiverJson.Line.Avatar+"\n"
+                  +"颜色标识:"+ReceiverJson.Line.PrintColor+"\n"
+
+                  +"\n礼物队列"+"\n\n"
+                  +"用户UID:"+ReceiverJson.GiftLine.Uid+"\n"
+                  +"用户名:"+ReceiverJson.GiftLine.UserName+"\n"
+                  +"用户头像地址:"+ReceiverJson.GiftLine.Avatar+"\n"
+                  +"颜色标识:"+ReceiverJson.GiftLine.PrintColor+"\n"
+                  +"礼物价格:"+ReceiverJson.GiftLine.GiftPrice
+          )
+        if (ReceiverJson.OpMessage){
+          switch (ReceiverJson.LineType){
+            case 0:
+              addGuardUser(ReceiverJson)
+              break;
+            case 1:
+              addGiftUser(ReceiverJson)
+              break;
+            case 2:
+              addNormalUser(ReceiverJson)
+              break;
+          }
+        }else{
+          DelUser(ReceiverJson)
+        }
+
+        DetectingTheNumberOfUsers();
+      }
+
+
+      setInterval(DetectingTheNumberOfUsers,10000)
+
+
+      // 监听连接关闭
+      socket.onclose = () => {
+        console.log('连接已关闭,将在5秒后重新连接');
+
+        setTimeout(connect, RECONNECT_INTERVAL);
+      }
+    }
+
+    // 初始化连接
+
+
+    function addGuardUser(UserStruct){
+      const userDiv = document.createElement('div');
+      userDiv.classList.add('user', 'Guard');
+      userDiv.setAttribute("Uid",UserStruct.Line.Uid)
+      userDiv.setAttribute("Index",UserStruct.Index)
+      // 创建图像和文本div
+      const img = document.createElement('img');
+      img.src = UserStruct.Line.Avatar;
+      const textDiv = document.createElement('div');
+      const userNameTag = document.createElement('a');
+      userNameTag.textContent = UserStruct.Line.UserName;
+      textDiv.appendChild(userNameTag);
+      // 构造用户div
+      userDiv.appendChild(img);
+      userDiv.appendChild(textDiv);
+      // 添加到父元素中
+      GuardLineDiv.appendChild(userDiv);
+    }
+
+
+    function addGiftUser(AddStruct){
+      const userDiv=document.createElement(`div`);
+      userDiv.classList.add('user','Gift');
+      userDiv.setAttribute("Uid",AddStruct.GiftLine.Uid);
+      userDiv.setAttribute("Index",AddStruct.GiftLine.Index);
+      const img = document.createElement('img');
+      img.src = AddStruct.GiftLine.Avatar;
+
+      const textDiv = document.createElement('div');
+      const userNameTag = document.createElement('a');
+      userNameTag.textContent=AddStruct.GiftLine.UserName;
+
+      textDiv.appendChild(userNameTag)
+
+      const GiftPriceTag = document.createElement(`a`);
+      GiftPriceTag.classList.add('GiftPrice');
+      GiftPriceTag.textContent=AddStruct.GiftLine.GiftPrice;
+      textDiv.appendChild(GiftPriceTag)
+
+      userDiv.appendChild(img)
+      userDiv.appendChild(textDiv)
+      GiftLineDiv.appendChild(userDiv)
+    }
+
+
+    function addNormalUser(AddStruct) {
+      // 创建新的用户div
+      const userDiv = document.createElement('div');
+      userDiv.classList.add('user', 'normal');
+      userDiv.setAttribute("Uid",AddStruct.Line.Uid)
+      // 创建图像和文本div
+      const img = document.createElement('img');
+      img.src = AddStruct.Line.Avatar;
+      const textDiv = document.createElement('div');
+      const userNameTag = document.createElement('a');
+      userNameTag.textContent = AddStruct.Line.UserName;
+      textDiv.appendChild(userNameTag);
+      // 构造用户div
+      userDiv.appendChild(img);
+      userDiv.appendChild(textDiv);
+      // 添加到父元素中
+      NormalLineDiv.appendChild(userDiv);
+    }
+
+
+    function DelUser(UserStruct){
+
+      document.querySelector(`[uid="${UserStruct.Line.Uid}"]`).remove();
+      document.querySelector(`[uid="${UserStruct.GiftLine.Uid}"]`).remove();
+    }
+
+
+
+  </script>
+  <script>
+
+    function GetConfig(){
+      const Http = new XMLHttpRequest();
+      const Url = "http://127.0.0.1:100/getConfig";
+      Http.open("GET",Url)
+      Http.send()
+      Http.onreadystatechange=function (){
+        if (this.readyState===4&&this.status===200){
+          let ConfigJson= JSON.parse(Http.response)
+          let LineStyle = document.createElement(`style`)
+          let GuardPrintColor = ConfigJson.GuardPrintColor
+          let GiftPrintColor= ConfigJson.GiftPrintColor
+          let CommonPrintColor = ConfigJson.CommonPrintColor
+
+          if (ConfigJson.TransparentBackground){
+            LineStyle.innerHTML=`
+          .Guard{
+                 color:rgb(${GuardPrintColor.R/255},${GuardPrintColor.G/255},${GuardPrintColor.B/255});
+                }
+          .Gift{
+                color:rgb(${GiftPrintColor.R/255},${GiftPrintColor.G/255},${GiftPrintColor.B/255});
+                }
+          .normal{
+                  color:rgb(${CommonPrintColor.R/255},${CommonPrintColor.G/255},${CommonPrintColor.B/255});
+                  }
+          .GiftPrice{
+            display:${ConfigJson.GiftPriceDisplay ? " ":"none"}
+          }
+          `
+          }else{
+
+
+            LineStyle.innerHTML=`
+          .Guard{background-color:rgb(${GuardPrintColor.R/255},${GuardPrintColor.G/255},${GuardPrintColor.B/255});
+                 color:rgb(${255-GuardPrintColor.R/255},${255-GuardPrintColor.G/255},${255-GuardPrintColor.B/255});
+          }
+          .Gift{background-color:rgb(${GiftPrintColor.R/255},${GiftPrintColor.G/255},${GiftPrintColor.B/255});
+                color:rgb(${255-GiftPrintColor.R/255},${255-GiftPrintColor.G/255},${255-GiftPrintColor.B/255});
+
+          }
+          .normal{background-color:rgb(${CommonPrintColor.R/255},${CommonPrintColor.G/255},${CommonPrintColor.B/255});
+                  color:rgb(${255-CommonPrintColor.R/255},${255-CommonPrintColor.G/255},${255-CommonPrintColor.B/255});
+          }
+          .GiftPrice{
+            display:${ConfigJson.GiftPriceDisplay ? " ":"none"}
+          }
+          `
+          }
+          document.head.appendChild(LineStyle)
+        }
+      }
+    }
+    GetConfig();
+
+    function GetCss(){
+      fetch('/default.css')
+              .then(response => response.text())
+              .then(css => {
+                // 创建style标签
+                const style = document.createElement('style')
+                // 设置style类型
+                style.type = 'text/css'
+                // 设置style内容
+                style.appendChild(document.createTextNode(css))
+                // 插入到head
+                document.head.appendChild(style)
+              })
+    }
+    GetCss();
+
+
+
+
+    function addDataToPage(jsonData) {
+      // 获取GuardLine数据
+      const guardLineData = jsonData.GuardLine;
+      const giftLineData = jsonData.GiftLine;
+      const commonLineDate = jsonData.CommonLine;
+
+
+
+
+      // 遍历GuardLine数据并创建HTML元素
+      if (guardLineData!=null){
+
+        guardLineData.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "user Guard";
+          div.setAttribute("Uid",item.Uid)
+
+          const img = document.createElement("img");
+          img.src = item.Avatar;
+
+          const divText = document.createElement("div");
+
+
+          const a2 = document.createElement("a");
+          a2.textContent = item.UserName;
+
+          divText.appendChild(a2);
+
+          div.appendChild(img);
+          div.appendChild(divText);
+
+          GuardLineDiv.appendChild(div);
+        });
+      }
+
+      if (giftLineData!=null){
+
+        giftLineData.forEach(item=> {
+          const userDiv=document.createElement(`div`);
+          userDiv.classList.add('user','Gift');
+          userDiv.setAttribute("Uid",item.Uid);
+          const img = document.createElement('img');
+          img.src = item.Avatar;
+
+          const textDiv = document.createElement('div');
+          const userNameTag = document.createElement('a');
+          userNameTag.textContent=item.UserName;
+
+          textDiv.appendChild(userNameTag)
+
+          const GiftPriceTag = document.createElement(`a`);
+          GiftPriceTag.classList.add('GiftPrice');
+          GiftPriceTag.textContent=" "+item.GiftPrice;
+          textDiv.appendChild(GiftPriceTag)
+
+          userDiv.appendChild(img)
+          userDiv.appendChild(textDiv)
+          GiftLineDiv.appendChild(userDiv)
+        })
+      }
+
+      if (commonLineDate!=null){
+
+        commonLineDate.forEach(item=>{
+          const div = document.createElement("div");
+          div.className = "user normal";
+          div.setAttribute("Uid",item.Uid);
+
+          const img = document.createElement("img");
+          img.src = item.Avatar;
+
+          const divText = document.createElement("div");
+
+
+          const a2 = document.createElement("a");
+          a2.textContent = item.UserName;
+
+          divText.appendChild(a2);
+
+          div.appendChild(img);
+          div.appendChild(divText);
+
+          NormalLineDiv.appendChild(div);
+        })
+      }
+    }
+
+
+    function DetectingTheNumberOfUsers(){
+      const Http=new XMLHttpRequest();
+      const Url = "http://127.0.0.1:100/getLineLength";
+      Http.open("GET",Url);
+      Http.send();
+      Http.onreadystatechange=function (){
+        if (this.readyState===4&&this.status===200){
+          const UserLength = Http.response
+          console.log("后端参数",UserLength)
+          console.log("前端参数",document.getElementsByClassName(`user`).length)
+          if (!(document.getElementsByClassName(`user`).length == UserLength)){
+            CleanAllUser();
+            GetAllUser();
+          }
+        }
+      }
+    }
+
+
+
+
+    function GetAllUser(){
+        const Http=new XMLHttpRequest();
+        const Url = "http://127.0.0.1:100/getAllLine"
+        Http.open("GET",Url);
+        Http.send();
+        Http.onreadystatechange=function (){
+          if (this.readyState===4&&this.status===200){
+            const AllLine = JSON.parse(Http.response)
+            addDataToPage(AllLine)
+          }
+        }
+    }
+    // GetAllUser();
+    connect();
+
+
+  </script>
+</body>
+</html>

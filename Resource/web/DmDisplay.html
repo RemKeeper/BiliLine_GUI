@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="referrer" content="never">
+    <title>弹幕显示</title>
+    <style>
+        @keyframes fadeIn {
+            from {
+                transform:translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0px);
+                opacity: 1;
+            }
+        }
+
+        .user{
+            animation: fadeIn 0.5s ease-in-out;
+            display: flex;
+            align-items: center;
+        }
+        .avatar img{
+            display: flex;
+            border-radius: 25px;
+            width: 25px;
+            height: 25px;
+        }
+        .userName a{
+            color: white;
+            text-shadow: -1px -1px 0 #000000, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black;
+        }
+        .Dm{
+            margin-left: 5px;
+            font-weight: bold;
+            color: sienna;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="user">
+        <div class="avatar">
+            <img src="https://i2.hdslb.com/bfs/face/77c57a7b660b222460e738f639cdb600cb98ed4c.jpg">
+        </div>
+        <div class="userName">
+            <a>普通用户</a>
+            <a>:</a>
+        </div>
+        <div class="Dm">
+            <a>这是一条弹幕</a>
+        </div>
+    </div>
+</div>
+<script>
+    function addUserStructure(AvatarURL,UserName,DmText) {
+        // 创建父容器 <div class="user">
+        const userDiv = document.createElement("div");
+        userDiv.className = "user";
+
+        // 创建头像容器 <div class="avatar">
+        const avatarDiv = document.createElement("div");
+        avatarDiv.className = "avatar";
+
+        // 创建头像图片 <img src="...">
+        const avatarImg = document.createElement("img");
+        avatarImg.src = AvatarURL;
+
+        // 将头像图片添加到头像容器
+        avatarDiv.appendChild(avatarImg);
+
+        // 创建用户名容器 <div class="userName">
+        const userNameDiv = document.createElement("div");
+        userNameDiv.className = "userName";
+
+        // 创建普通用户链接 <a>普通用户</a>
+        const userLink = document.createElement("a");
+        userLink.textContent = UserName;
+
+        // 创建冒号元素 <a>:</a>
+        const colonSpan = document.createElement("a");
+        colonSpan.textContent = " :";
+
+        // 将普通用户链接和冒号元素添加到用户名容器
+        userNameDiv.appendChild(userLink);
+        userNameDiv.appendChild(colonSpan);
+
+        // 创建弹幕容器 <div class="Dm">
+        const dmDiv = document.createElement("div");
+        dmDiv.className = "Dm";
+
+        // 创建弹幕链接 <a>这是一条弹幕</a>
+        const dmLink = document.createElement("a");
+        dmLink.textContent = DmText;
+
+        // 将弹幕链接添加到弹幕容器
+        dmDiv.appendChild(dmLink);
+
+        // 将头像容器、用户名容器和弹幕容器添加到父容器
+        userDiv.appendChild(avatarDiv);
+        userDiv.appendChild(userNameDiv);
+        userDiv.appendChild(dmDiv);
+
+        // 将父容器添加到文档中的适当位置
+        const container = document.getElementById("app");
+        container.appendChild(userDiv);
+    }
+
+    function DelEarliestDm(){
+        let DmList = document.getElementsByClassName("user")
+        if (DmList.length>50){
+            DmList[0].remove()
+        }
+    }
+    setInterval(DelEarliestDm,500)
+</script>
+<script>
+
+    function connect(){
+        let DmSocket = new WebSocket('ws://127.0.0.1:100/dmws')
+
+        DmSocket.onmessage=(event) =>{
+            let ReceiverDmDate = JSON.parse(event.data)
+            if (ReceiverDmDate.dm_type){
+                addUserStructure(ReceiverDmDate.uface,ReceiverDmDate.uname,ReceiverDmDate.msg)
+            }
+        }
+
+        DmSocket.onclose=()=>{
+            console.log("连接断开，将在5秒后尝试重新连接")
+            setTimeout(connect,5000)
+        }
+    }
+    connect()
+</script>
+</body>
+</html>
