@@ -6,7 +6,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"github.com/go-toast/toast"
 	"image/color"
 	"strconv"
 )
@@ -22,12 +21,12 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		if err != nil {
 			return
 		}
-		notification := toast.Notification{
-			AppID:   "排队姬",
-			Title:   "请看页面右下角",
-			Message: "点击右下角身份码按钮",
-		}
-		_ = notification.Push()
+		//notification := toast.Notification{
+		//	AppID:   "排队姬",
+		//	Title:   "请看页面右下角",
+		//	Message: "点击右下角身份码按钮",
+		//}
+		//_ = notification.Push()
 	})
 
 	LineKeyInput := widget.NewEntry()
@@ -82,6 +81,10 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	if Config.GiftLinePrice > 0 {
 		GiftPriceInput.Text = strconv.FormatFloat(Config.GiftLinePrice, 'f', -1, 64)
 	}
+
+	DisplayQueSizeCheck := widget.NewCheck("显示当前队列长度", func(b bool) {})
+	DisplayQueSizeCheck.Checked = Config.CurrentQueueSizeDisplay
+
 	LineMaxLengthInput := widget.NewEntry()
 	LineMaxLengthInput.SetPlaceHolder("队列最大容量")
 	if Config.MaxLineCount > 0 {
@@ -110,18 +113,22 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		}
 
 		SaveConfig := RunConfig{
-			IdCode:                IdCodeInput.Text,
-			GuardPrintColor:       ToLineColor(Guard.Color),
-			GiftPriceDisplay:      GiftPriceDisplaySwitch.Checked,
-			GiftPrintColor:        ToLineColor(Gift.Color),
-			GiftLinePrice:         GiftLinePriceFloat64,
-			CommonPrintColor:      ToLineColor(Normal.Color),
-			LineKey:               LineKeyInput.Text,
-			IsOnlyGift:            IsOnlyGiftSwitch.Checked,
-			AutoJoinGiftLine:      GiftJoinLine.Checked,
-			TransparentBackground: TransparentBackgroundCheck.Checked,
-			MaxLineCount:          LineMaxLengthInt,
+			IdCode:                  IdCodeInput.Text,
+			GuardPrintColor:         ToLineColor(Guard.Color),
+			GiftPriceDisplay:        GiftPriceDisplaySwitch.Checked,
+			GiftPrintColor:          ToLineColor(Gift.Color),
+			GiftLinePrice:           GiftLinePriceFloat64,
+			CommonPrintColor:        ToLineColor(Normal.Color),
+			LineKey:                 LineKeyInput.Text,
+			IsOnlyGift:              IsOnlyGiftSwitch.Checked,
+			AutoJoinGiftLine:        GiftJoinLine.Checked,
+			TransparentBackground:   TransparentBackgroundCheck.Checked,
+			MaxLineCount:            LineMaxLengthInt,
+			CurrentQueueSizeDisplay: DisplayQueSizeCheck.Checked,
 		}
+
+		KeyWordMatchMap = make(map[string]bool)
+		KeyWordMatchInit(SaveConfig.LineKey)
 
 		if err != nil {
 			dialog.ShowError(err, Windows)
@@ -134,7 +141,6 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			go RoomConnect(SaveConfig.IdCode)
 
 			Windows.SetContent(MakeMainUI(Windows, SaveConfig))
-
 		}
 	})
 	return container.NewVBox(IdCodeInput, OpenFanfan, LineKeyInput, IsOnlyGiftSwitch, GiftPriceDisplaySwitch, TransparentBackgroundCheck, SelectLineColor, GiftJoinLine, GiftPriceInput, LineMaxLengthInput, StartButton)

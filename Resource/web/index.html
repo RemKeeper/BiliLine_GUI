@@ -6,13 +6,13 @@
   <meta name="referrer" content="never">
 </head>
 <body>
-
+  <h3 id="LineSize">当前队列人数</h3>
   <div id="GuardLine" class="Line GuardLine">
     <div class="user Guard">
     <img src="/img/150w_150h.jpg">
     <div>
       <a>#1</a>  
-      <a>如果你看的这些</a>
+      <a>如果你看到这些</a>
     </div>
   </div>
   </div>
@@ -35,7 +35,7 @@
     <img src="/img/150w_150h.jpg">
     <div>    
       <a>#3</a>
-      <a>请联系开发者</a>
+      <a>请刷新缓存，重启，或寻求帮助</a>
     </div>
   </div>
   </div>
@@ -85,6 +85,7 @@
                   +"颜色标识:"+ReceiverJson.GiftLine.PrintColor+"\n"
                   +"礼物价格:"+ReceiverJson.GiftLine.GiftPrice
           )
+        document.getElementById("LineSize").textContent="当前队列人数:"+document.getElementsByClassName(`Line`).length
         if (ReceiverJson.OpMessage){
           switch (ReceiverJson.LineType){
             case 0:
@@ -224,8 +225,6 @@
           }
           `
           }else{
-
-
             LineStyle.innerHTML=`
           .Guard{background-color:rgb(${GuardPrintColor.R/255},${GuardPrintColor.G/255},${GuardPrintColor.B/255});
                  color:rgb(${255-GuardPrintColor.R/255},${255-GuardPrintColor.G/255},${255-GuardPrintColor.B/255});

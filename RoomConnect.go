@@ -5,6 +5,7 @@ import (
 	"github.com/vtb-link/bianka/live"
 	"github.com/vtb-link/bianka/proto"
 	"log"
+	"regexp"
 )
 
 func messageHandle(msg *proto.Message) error {
@@ -16,12 +17,6 @@ func messageHandle(msg *proto.Message) error {
 	if err == nil && !lineTemp.IsEmpty() {
 		line = lineTemp
 	}
-
-	// 单条消息raw 如果需要自己解析可以使用
-	//log.Println(string(msg.Payload()))
-
-	// sdk提供了自动解析消息的方法，可以快速解析为对应的cmd和data
-	// 具体的cmd 可以参考 live/cmd.go
 	cmd, data, err := live.AutomaticParsingMessageCommand(msg.Payload())
 	if err != nil {
 		return err
@@ -39,9 +34,10 @@ func messageHandle(msg *proto.Message) error {
 			DeleteLine(DanmuData.Uid)
 		}
 
-		if DanmuData.Msg != globalConfiguration.LineKey {
+		if !KeyWordMatchMap[DanmuData.Msg] {
 			break
 		}
+
 		uid := DanmuData.Uid
 
 		if line.GuardIndex[uid] != 0 || line.GiftIndex[uid] != 0 || line.CommonIndex[uid] != 0 {
@@ -139,5 +135,14 @@ func RoomConnect(IdCode string) {
 	<-CloseConn
 	log.Println("接收到退出信号")
 	return
+}
 
+var KeyWordMatchMap = make(map[string]bool)
+
+func KeyWordMatchInit(keyWord string) {
+	reg := regexp.MustCompile(`[^.,!！；：’“‘”?？;:，。、-]+`)
+	matches := reg.FindAllString(keyWord, -1)
+	for _, match := range matches {
+		KeyWordMatchMap[match] = true
+	}
 }

@@ -145,17 +145,18 @@ type WsPack struct {
 
 // RunConfig 配置格式
 type RunConfig struct {
-	IdCode                string
-	GuardPrintColor       LineColor
-	GiftPrintColor        LineColor
-	GiftLinePrice         float64
-	CommonPrintColor      LineColor
-	LineKey               string
-	GiftPriceDisplay      bool
-	IsOnlyGift            bool
-	AutoJoinGiftLine      bool
-	TransparentBackground bool
-	MaxLineCount          int
+	IdCode                  string
+	GuardPrintColor         LineColor
+	GiftPrintColor          LineColor
+	GiftLinePrice           float64
+	CommonPrintColor        LineColor
+	LineKey                 string
+	GiftPriceDisplay        bool
+	IsOnlyGift              bool
+	AutoJoinGiftLine        bool
+	TransparentBackground   bool
+	CurrentQueueSizeDisplay bool
+	MaxLineCount            int
 }
 
 type LineColor struct {

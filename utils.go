@@ -140,8 +140,9 @@ func randomInt(min, max int) int {
 func CleanOldVersion() {
 	_, err := os.Stat("./Version " + NowVersion)
 	if err != nil {
-		_ = os.Remove("./line.json")
-		_ = os.Remove("./lineConfig.json")
+		//_ = os.Remove("./line.json")
+		//_ = os.Remove("./lineConfig.json")
+
 		_, _ = os.Create("./Version " + NowVersion)
 		return
 	}
