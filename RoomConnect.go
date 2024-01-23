@@ -8,6 +8,8 @@ import (
 	"regexp"
 )
 
+var LiveUserId int
+
 func messageHandle(msg *proto.Message) error {
 	line.GuardIndex = make(map[int]int)
 	line.GiftIndex = make(map[int]int)
@@ -32,6 +34,11 @@ func messageHandle(msg *proto.Message) error {
 
 		if DanmuData.Msg == "取消排队" {
 			DeleteLine(DanmuData.Uid)
+		}
+
+		//Todo 该代码随身可能被删除，可能是B站实装OPENID后
+		if DanmuData.Msg == "删除" && DanmuData.Uid == LiveUserId {
+			DeleteFirst()
 		}
 
 		if !KeyWordMatchMap[DanmuData.Msg] {
@@ -111,6 +118,7 @@ func RoomConnect(IdCode string) {
 	if err != nil {
 		panic(err)
 	}
+	LiveUserId = startResp.AnchorInfo.Uid
 	RoomId <- startResp.AnchorInfo.RoomID
 
 	// app end

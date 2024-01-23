@@ -120,6 +120,16 @@ func DeleteLine(uid int) {
 	}
 }
 
+func DeleteFirst() {
+	if len(line.GuardLine) != 0 {
+		DeleteLine(line.GuardLine[0].Uid)
+	} else if len(line.GiftLine) != 0 {
+		DeleteLine(line.GiftLine[0].Uid)
+	} else if len(line.CommonLine) != 0 {
+		DeleteLine(line.CommonLine[0].Uid)
+	}
+}
+
 func assistUI() *fyne.Container {
 
 	Wx := canvas.NewImageFromReader(bytes.NewReader(WxJpg), "Wx.jpg")
