@@ -20,17 +20,13 @@ var (
 	CloseConn           chan bool
 )
 
-//const (
-//	AppID        int64 = 123456789
-//	AccessKey          = ""
-//	AccessSecret       = ""
-//)
-
 const (
-	AppID        int64 = 1662382413323
-	AccessKey          = "CzTDnPBEt17lbQjJBjCxwLzz"
-	AccessSecret       = "BEZOssCVUnLD76YnPCtVa8Qz8Tn5r4"
+	AppID        int64 = 123456789
+	AccessKey          = ""
+	AccessSecret       = ""
 )
+
+
 
 func main() {
 	//CleanOldVersion()
