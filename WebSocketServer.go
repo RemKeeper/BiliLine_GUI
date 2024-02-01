@@ -20,15 +20,18 @@ var QueHtmlFile []byte
 //go:embed Resource/web/default.css
 var cssFile []byte
 
+//go:embed Resource/web/DmDisplay.html
+var DmDisplayHtml []byte
+
 var (
 	QueueChatChan = make(chan []byte, 50)
-	//DmChatChan    = make(chan []byte, 50)
-	upgrader = websocket.Upgrader{
+	DmChatChan    = make(chan []byte, 50)
+	upgrader      = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
 	QueueConnMap = make(map[*websocket.Conn]bool)
-	//DmConnMap    = make(map[*websocket.Conn]bool)
+	DmConnMap    = make(map[*websocket.Conn]bool)
 )
 
 func StartWebServer() {
@@ -46,7 +49,8 @@ func StartWebServer() {
 func WebServer() *http.ServeMux {
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/ws", func(writer http.ResponseWriter, request *http.Request) {
+
+	mux.HandleFunc("/LineWs", func(writer http.ResponseWriter, request *http.Request) {
 
 		conn, err := upgrader.Upgrade(writer, request, nil)
 		if err != nil {
@@ -96,15 +100,76 @@ func WebServer() *http.ServeMux {
 				if err != nil {
 					log.Println("Failed to write message:", err)
 					delete(QueueConnMap, w)
-					return
 				}
 			}
 
 		}
 	})
 
+	mux.HandleFunc("/DmWs", func(writer http.ResponseWriter, request *http.Request) {
+		conn, err := upgrader.Upgrade(writer, request, nil)
+		if err != nil {
+			log.Println("Websocket Upgrade Err:" + err.Error())
+			return
+		}
+		DmConnMap[conn] = true
+
+		err = conn.WriteMessage(websocket.TextMessage, []byte("Connected"))
+		if err != nil {
+			log.Println("Websocket Write Err:" + err.Error())
+			delete(DmConnMap, conn)
+			return
+		}
+
+		defer func(conn *websocket.Conn) {
+			err := conn.Close()
+			if err != nil {
+				log.Println("Failed to close connection:", err)
+				return
+			}
+		}(conn)
+
+		go func() {
+			for {
+				_, Message, err := conn.ReadMessage()
+				if err != nil {
+					return
+				}
+				switch string(Message) {
+				case "ping":
+					err := conn.WriteMessage(websocket.TextMessage, []byte("pong"))
+					if err != nil {
+						return
+					}
+				}
+
+			}
+		}()
+
+		for {
+			Chat := <-DmChatChan
+			ConnMapCopy := DmConnMap
+			for w := range ConnMapCopy {
+				err = w.WriteMessage(websocket.TextMessage, Chat)
+				if err != nil {
+					log.Println("Failed to write message:", err)
+					delete(DmConnMap, w)
+				}
+			}
+		}
+	})
+
+	//静态资源响应
+
 	mux.HandleFunc("/web", func(writer http.ResponseWriter, request *http.Request) {
 		_, err := writer.Write(QueHtmlFile)
+		if err != nil {
+			return
+		}
+	})
+
+	mux.HandleFunc("/dm", func(writer http.ResponseWriter, request *http.Request) {
+		_, err := writer.Write(DmDisplayHtml)
 		if err != nil {
 			return
 		}
@@ -159,6 +224,8 @@ func WebServer() *http.ServeMux {
 			}
 		}
 	})
+
+	//静态同步接口
 
 	mux.HandleFunc("/getAllLine", func(writer http.ResponseWriter, request *http.Request) {
 		lineJson, err := json.Marshal(line)

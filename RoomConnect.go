@@ -32,6 +32,9 @@ func messageHandle(msg *proto.Message) error {
 		}
 		DanmuData := data.(*live.CmdLiveOpenPlatformDanmuData)
 
+		//发送原始弹幕数据到WS
+		SendDmToWs(DanmuData)
+
 		if DanmuData.Msg == "取消排队" {
 			DeleteLine(DanmuData.Uid)
 		}

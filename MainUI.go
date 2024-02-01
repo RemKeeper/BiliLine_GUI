@@ -61,15 +61,22 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	JumpToConfigUI := widget.NewButton("重新设置", func() {
 		Windows.SetContent(MakeConfigUI(Windows, Config))
 	})
-	CopyUrlButton := widget.NewButton("复制前端Url", func() {
+	CopyLineUrlButton := widget.NewButton("复制排队组件Url", func() {
 		err = clipboard.WriteAll("http://127.0.0.1:100/web")
 		if err != nil {
 			dialog.ShowError(DisplayError{"写入剪贴板错误"}, Windows)
 			return
 		}
 	})
+	CopyDmUrlButton := widget.NewButton("复制弹幕组件Url", func() {
+		err := clipboard.WriteAll("http://127.0.0.1:100/dm")
+		if err != nil {
+			dialog.ShowError(DisplayError{"写入剪贴板错误"}, Windows)
+			return
+		}
+	})
 	assist := container.NewHBox()
-	if randomInt(0, 10) >= 7 {
+	if randomInt(0, 10) >= 6 {
 		assist.Add(widget.NewButton("赞助作者", func() {
 			assistDia := dialog.NewCustom("感谢您的赞助", "关闭", assistUI(), MainWindows)
 			assistDia.Show()
@@ -93,9 +100,9 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			canvas.NewText(difference.String(), color.White),
 		)
 
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyUrlButton, JumpToConfigUI, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyLineUrlButton, CopyDmUrlButton, JumpToConfigUI, assist)
 	} else {
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyUrlButton, JumpToConfigUI, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyLineUrlButton, CopyDmUrlButton, JumpToConfigUI, assist)
 	}
 
 }

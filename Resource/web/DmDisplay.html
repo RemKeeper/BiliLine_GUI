@@ -7,7 +7,7 @@
     <style>
         @keyframes fadeIn {
             from {
-                transform:translateY(20px);
+                transform: translateY(20px);
                 opacity: 0;
             }
             to {
@@ -16,25 +16,33 @@
             }
         }
 
-        .user{
+        .user {
             animation: fadeIn 0.5s ease-in-out;
             display: flex;
             align-items: center;
         }
-        .avatar img{
+
+        .avatar img {
             display: flex;
             border-radius: 25px;
             width: 25px;
             height: 25px;
         }
-        .userName a{
+
+        .userName a {
             color: white;
             text-shadow: -1px -1px 0 #000000, 1px -1px 0 black, -1px 1px 0 black, 1px 1px 0 black;
         }
-        .Dm{
+
+        .Dm {
             margin-left: 5px;
             font-weight: bold;
             color: sienna;
+        }
+
+        .EmojiImg img {
+            width: 40px;
+            height: 40px;
         }
 
     </style>
@@ -42,21 +50,24 @@
 <body>
 
 <div id="app">
-    <div class="user">
-        <div class="avatar">
-            <img src="https://i2.hdslb.com/bfs/face/77c57a7b660b222460e738f639cdb600cb98ed4c.jpg">
-        </div>
-        <div class="userName">
-            <a>普通用户</a>
-            <a>:</a>
-        </div>
-        <div class="Dm">
-            <a>这是一条弹幕</a>
-        </div>
-    </div>
+<!--    <div class="user">-->
+<!--        <div class="avatar">-->
+<!--            <img src="https://i2.hdslb.com/bfs/face/77c57a7b660b222460e738f639cdb600cb98ed4c.jpg">-->
+<!--        </div>-->
+<!--        <div class="userName">-->
+<!--            <a>普通用户</a>-->
+<!--            <a>:</a>-->
+<!--        </div>-->
+<!--        &lt;!&ndash;        <div class="Dm">&ndash;&gt;-->
+<!--        &lt;!&ndash;            <a>这是一条弹幕</a>&ndash;&gt;-->
+<!--        &lt;!&ndash;        </div>&ndash;&gt;-->
+<!--        <div class="EmojiImg">-->
+<!--            <img src="http://i0.hdslb.com/bfs/emote/1e0cbe36d039b412f76fd72b3c86c0261a8aa521.png">-->
+<!--        </div>-->
+<!--    </div>-->
 </div>
 <script>
-    function addUserStructure(AvatarURL,UserName,DmText) {
+    function addUserStructure(AvatarURL, UserName, DmText, DmType) {
         // 创建父容器 <div class="user">
         const userDiv = document.createElement("div");
         userDiv.className = "user";
@@ -88,52 +99,80 @@
         userNameDiv.appendChild(userLink);
         userNameDiv.appendChild(colonSpan);
 
-        // 创建弹幕容器 <div class="Dm">
-        const dmDiv = document.createElement("div");
-        dmDiv.className = "Dm";
-
-        // 创建弹幕链接 <a>这是一条弹幕</a>
-        const dmLink = document.createElement("a");
-        dmLink.textContent = DmText;
-
-        // 将弹幕链接添加到弹幕容器
-        dmDiv.appendChild(dmLink);
-
         // 将头像容器、用户名容器和弹幕容器添加到父容器
         userDiv.appendChild(avatarDiv);
         userDiv.appendChild(userNameDiv);
-        userDiv.appendChild(dmDiv);
 
-        // 将父容器添加到文档中的适当位置
+        if (DmType) {
+            // 创建弹幕图片容器 <div class="EmojiImg">
+            const EmojiImgDiv = document.createElement("div");
+            EmojiImgDiv.className = "EmojiImg";
+
+            // 创建弹幕图片 <img src="...">
+            const EmojiImg = document.createElement("img");
+            EmojiImg.src = DmText;
+
+            // 将弹幕图片添加到弹幕图片容器
+            EmojiImgDiv.appendChild(EmojiImg);
+
+            // 将弹幕图片容器添加到父容器
+            userDiv.appendChild(EmojiImgDiv);
+        } else {
+            // 创建弹幕容器 <div class="Dm">
+            const dmDiv = document.createElement("div");
+            dmDiv.className = "Dm";
+
+            // 创建弹幕链接 <a>这是一条弹幕</a>
+            const dmLink = document.createElement("a");
+            dmLink.textContent = DmText;
+
+            // 将弹幕链接添加到弹幕容器
+            dmDiv.appendChild(dmLink);
+
+            userDiv.appendChild(dmDiv);
+        }
+
+
+
+        // 将父容器添加到适当位置
         const container = document.getElementById("app");
         container.appendChild(userDiv);
     }
 
-    function DelEarliestDm(){
+    function DelEarliestDm() {
         let DmList = document.getElementsByClassName("user")
-        if (DmList.length>50){
+        if (DmList.length > 50) {
             DmList[0].remove()
         }
     }
-    setInterval(DelEarliestDm,500)
+
+    setInterval(DelEarliestDm, 500)
 </script>
 <script>
 
-    function connect(){
-        let DmSocket = new WebSocket('ws://127.0.0.1:100/dmws')
+    function connect() {
+        let DmSocket = new WebSocket('ws://127.0.0.1:100/DmWs')
 
-        DmSocket.onmessage=(event) =>{
+        DmSocket.onmessage = (event) => {
             let ReceiverDmDate = JSON.parse(event.data)
-            if (ReceiverDmDate.dm_type){
-                addUserStructure(ReceiverDmDate.uface,ReceiverDmDate.uname,ReceiverDmDate.msg)
+            if (!ReceiverDmDate.dm_type) {
+                console.log("收到一条弹幕")
+                addUserStructure(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.msg, ReceiverDmDate.dm_type)
+                console.log(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.msg, ReceiverDmDate.dm_type)
+            } else {
+                console.log("收到一个表情包")
+                addUserStructure(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.emoji_img_url, ReceiverDmDate.dm_type)
+                console.log(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.emoji_img_url, ReceiverDmDate.dm_type)
             }
+
         }
 
-        DmSocket.onclose=()=>{
+        DmSocket.onclose = () => {
             console.log("连接断开，将在5秒后尝试重新连接")
-            setTimeout(connect,5000)
+            setTimeout(connect, 5000)
         }
     }
+
     connect()
 </script>
 </body>

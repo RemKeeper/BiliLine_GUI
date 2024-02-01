@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"github.com/vtb-link/bianka/live"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -73,6 +74,14 @@ func SendLineToWs(NormalLine Line, Gift GiftLine, LineType int) {
 		}
 		QueueChatChan <- SendWsJson
 	}
+}
+
+func SendDmToWs(Dm *live.CmdLiveOpenPlatformDanmuData) {
+	SendDmWsJson, err := json.Marshal(Dm)
+	if err != nil {
+		return
+	}
+	DmChatChan <- SendDmWsJson
 }
 
 func SendDelToWs(LineType, index, uid int) {

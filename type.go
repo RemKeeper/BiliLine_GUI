@@ -103,23 +103,24 @@ type LineRow struct {
 }
 
 // UpdateIndex 更新队列索引，传入UpdateType 0为GuardLine 1为GiftLine 2为CommonLine
-func (Line LineRow) UpdateIndex(UpdateType int) {
+func (r LineRow) UpdateIndex(UpdateType int) {
 	switch UpdateType {
 	case 0:
-		for i, l := range Line.GuardLine {
-			Line.GuardIndex[l.Uid] = i + 1
+		for i, l := range r.GuardLine {
+			r.GuardIndex[l.Uid] = i + 1
 		}
 	case 1:
-		for i, l := range Line.GiftLine {
-			Line.GiftIndex[l.Uid] = i + 1
+		for i, l := range r.GiftLine {
+			r.GiftIndex[l.Uid] = i + 1
 		}
 	case 2:
-		for i, l := range Line.CommonLine {
-			Line.CommonIndex[l.Uid] = i + 1
+		for i, l := range r.CommonLine {
+			r.CommonIndex[l.Uid] = i + 1
 		}
 	}
 }
 
+// Line 单一队列基础信息
 type Line struct {
 	Uid        int       `json:"Uid"`
 	UserName   string    `json:"UserName"`
@@ -127,6 +128,7 @@ type Line struct {
 	PrintColor LineColor `json:"PrintColor"`
 }
 
+// GiftLine 礼物用户队列信息
 type GiftLine struct {
 	Uid        int       `json:"Uid"`
 	UserName   string    `json:"UserName"`
@@ -135,6 +137,7 @@ type GiftLine struct {
 	GiftPrice  float64   `json:"GiftPrice"`
 }
 
+// WsPack 前端通讯Websocket包结构
 type WsPack struct {
 	OpMessage int
 	Index     int
@@ -178,10 +181,10 @@ func (lc LineColor) IsEmpty() bool {
 	return lc.R == 0 && lc.G == 0 && lc.B == 0
 }
 
-func (lc LineRow) IsEmpty() bool {
-	return len(lc.GuardLine) == 0 &&
-		len(lc.GiftLine) == 0 &&
-		len(lc.CommonLine) == 0
+func (r LineRow) IsEmpty() bool {
+	return len(r.GuardLine) == 0 &&
+		len(r.GiftLine) == 0 &&
+		len(r.CommonLine) == 0
 }
 
 // VersionSct 版本检查结构

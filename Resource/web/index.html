@@ -63,7 +63,7 @@
       CleanAllUser();
       GetAllUser();
 
-      let socket = new WebSocket('ws://127.0.0.1:100/ws');
+      let socket = new WebSocket('ws://127.0.0.1:100/LineWs');
 
       // 处理消息
       socket.onmessage = (event) => {
