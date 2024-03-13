@@ -2,150 +2,146 @@ package main
 
 import (
 	"fmt"
-	"github.com/vtb-link/bianka/live"
-	"github.com/vtb-link/bianka/proto"
 	"log"
 	"regexp"
+	"time"
+
+	"github.com/vtb-link/bianka/basic"
+
+	"github.com/vtb-link/bianka/live"
+	"github.com/vtb-link/bianka/proto"
 )
 
 var LiveUserId int
 
-func messageHandle(msg *proto.Message) error {
-	line.GuardIndex = make(map[int]int)
-	line.GiftIndex = make(map[int]int)
-	line.CommonIndex = make(map[int]int)
+func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
+	line.GuardIndex = make(map[string]int)
+	line.GiftIndex = make(map[string]int)
+	line.CommonIndex = make(map[string]int)
 
 	lineTemp, err := GetLine()
 	if err == nil && !lineTemp.IsEmpty() {
 		line = lineTemp
 	}
-	cmd, data, err := live.AutomaticParsingMessageCommand(msg.Payload())
+	cmd, data, err := proto.AutomaticParsingMessageCommand(msg.Payload())
 	if err != nil {
 		return err
 	}
 	// 你可以使用cmd进行switch
 	switch cmd {
-	case live.CmdLiveOpenPlatformDanmu:
-		//log.Println(cmd, data.(*live.CmdLiveOpenPlatformDanmuData))
+	case proto.CmdLiveOpenPlatformDanmu:
 		if globalConfiguration.IsOnlyGift {
 			break
 		}
-		DanmuData := data.(*live.CmdLiveOpenPlatformDanmuData)
+		DanmuData := data.(*proto.CmdDanmuData)
 
-		//发送原始弹幕数据到WS
-		SendDmToWs(DanmuData)
+		Broadcast.Broadcast(DanmuData)
 
-		if DanmuData.Msg == "取消排队" {
-			DeleteLine(DanmuData.Uid)
-		}
+	case proto.CmdLiveOpenPlatformSendGift:
+		GiftData := data.(*proto.CmdSendGiftData)
 
-		//Todo 该代码随身可能被删除，可能是B站实装OPENID后
-		if DanmuData.Msg == "删除" && DanmuData.Uid == LiveUserId {
-			DeleteFirst()
-		}
-
-		if !KeyWordMatchMap[DanmuData.Msg] {
-			break
-		}
-
-		uid := DanmuData.Uid
-
-		if line.GuardIndex[uid] != 0 || line.GiftIndex[uid] != 0 || line.CommonIndex[uid] != 0 {
-			break
-		}
-		switch {
-		case DanmuData.GuardLevel <= 3 && DanmuData.GuardLevel != 0:
-			fmt.Println(DanmuData)
-			lineTemp := Line{
-				Uid:        DanmuData.Uid,
-				UserName:   DanmuData.Uname,
-				Avatar:     DanmuData.UFace,
-				PrintColor: globalConfiguration.GuardPrintColor,
-			}
-			line.GuardLine = append(line.GuardLine, lineTemp)
-			line.GuardIndex[DanmuData.Uid] = len(line.GuardLine)
-			SendLineToWs(lineTemp, GiftLine{}, GuardLineType)
-			SetLine(line)
-
-		case len(line.CommonLine) <= globalConfiguration.MaxLineCount:
-			lineTemp := Line{
-				Uid:        DanmuData.Uid,
-				UserName:   DanmuData.Uname,
-				Avatar:     DanmuData.UFace,
-				PrintColor: globalConfiguration.CommonPrintColor,
-			}
-			line.CommonLine = append(line.CommonLine, lineTemp)
-			line.CommonIndex[DanmuData.Uid] = len(line.CommonLine)
-			SendLineToWs(lineTemp, GiftLine{}, CommonLineType)
-			SetLine(line)
-		}
-	case live.CmdLiveOpenPlatformSendGift:
-		//log.Println(cmd, data.(*live.CmdLiveOpenPlatformSendGiftData))
-		GiftData := data.(*live.CmdLiveOpenPlatformSendGiftData)
 		if !globalConfiguration.AutoJoinGiftLine {
 			break
 		}
-		if line.GiftIndex[GiftData.Uid] != 0 {
+		if line.GiftIndex[GiftData.OpenID] != 0 {
 			break
 		}
+
+		if !GiftData.Paid {
+			break
+		}
+
 		lineTemp := GiftLine{
-			Uid:        GiftData.Uid,
+			OpenID: GiftData.OpenID,
+			// OpenID:     strconv.Itoa(GiftData.Uid),
 			UserName:   GiftData.Uname,
 			Avatar:     GiftData.Uface,
 			PrintColor: globalConfiguration.GiftPrintColor,
-			GiftPrice:  float64(GiftData.Price),
+			GiftPrice:  float64(GiftData.Price * GiftData.GiftNum / 1000),
 		}
 		if (float64(GiftData.GiftNum*GiftData.Price))/1000 >= globalConfiguration.GiftLinePrice {
 			line.GiftLine = append(line.GiftLine, lineTemp)
-			line.GiftIndex[GiftData.Uid] = len(line.GiftLine)
+			line.GiftIndex[GiftData.OpenID] = len(line.GiftLine)
 			SendLineToWs(Line{}, lineTemp, GiftLineType)
 			SetLine(line)
 		}
 	case live.CmdLiveOpenPlatformGuard:
-		log.Println(cmd, data.(*live.CmdLiveOpenPlatformGuardData))
-
+		log.Println(cmd, data.(*proto.CmdGuardData))
 	}
 
 	return nil
 }
 
 func RoomConnect(IdCode string) {
-	//<-CloseConn
 	sdkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
-
 	// 创建sdk实例
 	sdk := live.NewClient(sdkConfig)
-
 	// app start
 	startResp, err := sdk.AppStart(IdCode)
 	if err != nil {
 		panic(err)
 	}
-	LiveUserId = startResp.AnchorInfo.Uid
-	RoomId <- startResp.AnchorInfo.RoomID
 
+	fmt.Println("当前连接用户为", startResp.AnchorInfo)
+
+	// 启用项目心跳 20s一次
+	// see https://open-live.bilibili.com/document/eba8e2e1-847d-e908-2e5c-7a1ec7d9266f
+	tk := time.NewTicker(time.Second * 20)
+	go func(GameID string) {
+		for {
+			select {
+			case <-tk.C:
+				// 心跳
+				if err := sdk.AppHeartbeat(GameID); err != nil {
+					log.Println("Heartbeat fail", err)
+				}
+			}
+		}
+	}(startResp.GameInfo.GameID)
+	RoomId = startResp.AnchorInfo.RoomID
 	// app end
 	defer func() {
-		//tk.Stop()
+		tk.Stop()
 		sdk.AppEnd(startResp.GameInfo.GameID)
 	}()
 
-	dispatcherHandle := map[uint32]live.DispatcherHandle{
+	dispatcherHandleMap := basic.DispatcherHandleMap{
 		proto.OperationMessage: messageHandle,
 	}
-	onCloseCallback := func(startResp *live.AppStartResponse) {
+
+	// 关闭回调事件
+	// 此事件会在websocket连接关闭后触发
+	// 时序如下：
+	// 0. send close message // 主动发送关闭消息
+	// 1. close eventLoop // 不再处理任何消息
+	// 2. close websocket // 关闭websocket连接
+	// 3. onCloseCallback // 触发关闭回调事件
+	// 增加了closeType 参数, 用于区分关闭类型
+	onCloseCallback := func(wcs *basic.WsClient, startResp basic.StartResp, closeType int) {
+		// 注册关闭回调
 		log.Println("WebsocketClient onClose", startResp)
+
+		// 注意检查关闭类型, 避免无限重连
+		if closeType == live.CloseActively || closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
+			log.Println("WebsocketClient exit")
+			return
+		}
+
+		err := wcs.Reconnection(startResp)
+		if err != nil {
+			log.Println("Reconnection fail", err)
+		}
 	}
-	wsClient, err := sdk.StartWebsocket(startResp, dispatcherHandle, onCloseCallback)
+
+	wsClient, err := basic.StartWebsocket(startResp, dispatcherHandleMap, onCloseCallback, basic.DefaultLoggerGenerator())
 	if err != nil {
 		panic(err)
 	}
 
 	defer wsClient.Close()
-
 	<-CloseConn
-	log.Println("接收到退出信号")
-	return
+	log.Println("监听到退出信号")
+	// 监听退出信号
 }
 
 var KeyWordMatchMap = make(map[string]bool)

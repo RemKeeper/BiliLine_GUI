@@ -1,13 +1,15 @@
 package main
 
 import (
+	"image/color"
+	"strconv"
+	"time"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"image/color"
-	"strconv"
 )
 
 func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
@@ -62,8 +64,12 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	if !Config.CommonPrintColor.IsEmpty() {
 		Normal.Color = Config.CommonPrintColor.ToRGBA()
 	}
-	TransparentBackgroundCheck := widget.NewCheck("开启排队展示无背景色 UI", func(b bool) {
 
+	DmDisplayColor := canvas.NewText("弹幕", color.RGBA{R: 255, G: 255, B: 255, A: 255})
+	if !Config.DmDisplayColor.IsEmpty() {
+		DmDisplayColor.Color = Config.DmDisplayColor.ToRGBA()
+	}
+	TransparentBackgroundCheck := widget.NewCheck("开启排队展示无背景色 UI", func(b bool) {
 	})
 	TransparentBackgroundCheck.Checked = Config.TransparentBackground
 	SelectLineColor := container.NewVBox(
@@ -82,8 +88,14 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		GiftPriceInput.Text = strconv.FormatFloat(Config.GiftLinePrice, 'f', -1, 64)
 	}
 
-	DisplayQueSizeCheck := widget.NewCheck("显示当前队列长度", func(b bool) {})
-	DisplayQueSizeCheck.Checked = Config.CurrentQueueSizeDisplay
+	DisplayQueSize := widget.NewCheck("显示当前队列长度", func(b bool) {})
+	DisplayQueSize.Checked = Config.CurrentQueueSizeDisplay
+
+	EnableMusicServer := widget.NewCheck("启用音乐服务器", func(b bool) {})
+	EnableMusicServer.Checked = Config.EnableMusicServer
+
+	EnableDmDisplayNoSleep := widget.NewCheck("弹幕页面显示不休眠(移动端实验性)", func(b bool) {})
+	EnableDmDisplayNoSleep.Checked = Config.DmDisplayNoSleep
 
 	LineMaxLengthInput := widget.NewEntry()
 	LineMaxLengthInput.SetPlaceHolder("队列最大容量")
@@ -119,12 +131,15 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			GiftPrintColor:          ToLineColor(Gift.Color),
 			GiftLinePrice:           GiftLinePriceFloat64,
 			CommonPrintColor:        ToLineColor(Normal.Color),
+			DmDisplayColor:          ToLineColor(DmDisplayColor.Color),
 			LineKey:                 LineKeyInput.Text,
 			IsOnlyGift:              IsOnlyGiftSwitch.Checked,
 			AutoJoinGiftLine:        GiftJoinLine.Checked,
 			TransparentBackground:   TransparentBackgroundCheck.Checked,
 			MaxLineCount:            LineMaxLengthInt,
-			CurrentQueueSizeDisplay: DisplayQueSizeCheck.Checked,
+			CurrentQueueSizeDisplay: DisplayQueSize.Checked,
+			EnableMusicServer:       EnableMusicServer.Checked,
+			DmDisplayNoSleep:        EnableDmDisplayNoSleep.Checked,
 		}
 
 		KeyWordMatchMap = make(map[string]bool)
@@ -138,12 +153,14 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			if !IsFirstStart {
 				CloseConn <- true
 			}
-			go RoomConnect(SaveConfig.IdCode)
-
+			// dialog.ShowInformation("保存成功", "配置已保存,请重启", Windows)
+			go RoomConnect(globalConfiguration.IdCode)
+			time.Sleep(1 * time.Second)
 			Windows.SetContent(MakeMainUI(Windows, SaveConfig))
+
 		}
 	})
-	return container.NewVBox(IdCodeInput, OpenFanfan, LineKeyInput, IsOnlyGiftSwitch, GiftPriceDisplaySwitch, TransparentBackgroundCheck, SelectLineColor, GiftJoinLine, GiftPriceInput, LineMaxLengthInput, StartButton)
+	return container.NewVBox(IdCodeInput, OpenFanfan, LineKeyInput, IsOnlyGiftSwitch, GiftPriceDisplaySwitch, TransparentBackgroundCheck, SelectLineColor, GiftJoinLine, GiftPriceInput, DisplayQueSize, EnableMusicServer, EnableDmDisplayNoSleep, LineMaxLengthInput, StartButton)
 }
 
 func MakeSelectColor(text *canvas.Text) *fyne.Container {

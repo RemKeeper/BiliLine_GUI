@@ -3,8 +3,6 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/websocket"
 	"io/fs"
 	"log"
 	"net/http"
@@ -12,6 +10,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/websocket"
 )
 
 //go:embed Resource/web/index.html
@@ -22,6 +23,12 @@ var cssFile []byte
 
 //go:embed Resource/web/DmDisplay.html
 var DmDisplayHtml []byte
+
+//go:embed Resource/web/DmDisplay_mobile.html
+var DmDisplayMobileHtml []byte
+
+//go:embed Resource/web/js/NoSleep.min.js
+var NoSleepJs []byte
 
 var (
 	QueueChatChan = make(chan []byte, 50)
@@ -47,11 +54,9 @@ func StartWebServer() {
 }
 
 func WebServer() *http.ServeMux {
-
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/LineWs", func(writer http.ResponseWriter, request *http.Request) {
-
 		conn, err := upgrader.Upgrade(writer, request, nil)
 		if err != nil {
 			log.Println(err.Error())
@@ -61,7 +66,6 @@ func WebServer() *http.ServeMux {
 		QueueConnMap[conn] = true
 
 		err = conn.WriteMessage(websocket.TextMessage, []byte("Connected"))
-
 		if err != nil {
 			delete(QueueConnMap, conn)
 			return
@@ -159,7 +163,7 @@ func WebServer() *http.ServeMux {
 		}
 	})
 
-	//静态资源响应
+	// 静态资源响应
 
 	mux.HandleFunc("/web", func(writer http.ResponseWriter, request *http.Request) {
 		_, err := writer.Write(QueHtmlFile)
@@ -174,6 +178,13 @@ func WebServer() *http.ServeMux {
 			return
 		}
 	})
+
+	//mux.HandleFunc("/dm_mobile", func(writer http.ResponseWriter, request *http.Request) {
+	//	_, err := writer.Write(DmDisplayMobileHtml)
+	//	if err != nil {
+	//		return
+	//	}
+	//})
 
 	mux.HandleFunc("/font.ttf", func(writer http.ResponseWriter, request *http.Request) {
 		err := filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
@@ -225,7 +236,14 @@ func WebServer() *http.ServeMux {
 		}
 	})
 
-	//静态同步接口
+	mux.HandleFunc("/NoSleep.min.js", func(writer http.ResponseWriter, request *http.Request) {
+		_, err := writer.Write(NoSleepJs)
+		if err != nil {
+			return
+		}
+	})
+
+	// 静态同步接口
 
 	mux.HandleFunc("/getAllLine", func(writer http.ResponseWriter, request *http.Request) {
 		lineJson, err := json.Marshal(line)

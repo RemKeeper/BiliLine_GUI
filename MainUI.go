@@ -4,17 +4,19 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"fmt"
+	"image/color"
+	"io"
+	"log"
+	"net/http"
+	"strconv"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/atotto/clipboard"
-	"image/color"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 //go:embed Resource/404.jpg
@@ -23,8 +25,10 @@ var Pic404 []byte
 func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	Windows.SetTitle("主页面")
 	var RoomInformationObtained RoomInfo
-
-	RoomInformationObtained, err := GetRoomInfo(strconv.Itoa(<-RoomId))
+	for RoomId == 0 {
+	}
+	fmt.Println("主线程房间号", RoomId)
+	RoomInformationObtained, err := GetRoomInfo(strconv.Itoa(RoomId))
 	if err != nil {
 		dialog.ShowError(DisplayError{Message: "获得房间信息错误 请重新输入房间号"}, Windows)
 	}
@@ -75,6 +79,18 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			return
 		}
 	})
+
+	CopyMusicUrlButton := widget.NewButton("复制音乐组件Url[仅在开启音乐插件后有效]", func() {
+		err := clipboard.WriteAll("http://127.0.0.1:99/music")
+		if err != nil {
+			dialog.ShowError(DisplayError{"写入剪贴板错误"}, Windows)
+			return
+		}
+	})
+	if !globalConfiguration.EnableMusicServer {
+		CopyMusicUrlButton.Hide()
+	}
+
 	assist := container.NewHBox()
 	if randomInt(0, 10) >= 6 {
 		assist.Add(widget.NewButton("赞助作者", func() {
@@ -100,11 +116,10 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			canvas.NewText(difference.String(), color.White),
 		)
 
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyLineUrlButton, CopyDmUrlButton, JumpToConfigUI, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, assist)
 	} else {
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyLineUrlButton, CopyDmUrlButton, JumpToConfigUI, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, assist)
 	}
-
 }
 
 func GetRoomInfo(RoomId string) (RoomInfo, error) {

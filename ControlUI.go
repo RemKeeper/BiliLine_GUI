@@ -1,17 +1,17 @@
 package main
 
 import (
+	"time"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"time"
 )
 
-var LineBoxItem = make(map[int]*fyne.Container)
+var LineBoxItem = make(map[string]*fyne.Container)
 
 func MakeCtrlUI() *fyne.Container {
-
 	vbox := container.NewVBox()
 	var (
 		GuardLength  int
@@ -26,36 +26,36 @@ func MakeCtrlUI() *fyne.Container {
 				vbox.RemoveAll()
 				for _, i2 := range OldLine.GuardLine {
 					LineTemp := i2
-					LineBoxItem[LineTemp.Uid] = container.NewHBox(canvas.NewText(LineTemp.UserName, LineTemp.PrintColor.ToRGBA()), widget.NewButton("删除", func() {
-						vbox.Remove(LineBoxItem[LineTemp.Uid])
-						DeleteLine(LineTemp.Uid)
-						delete(LineBoxItem, LineTemp.Uid)
+					LineBoxItem[LineTemp.OpenID] = container.NewHBox(canvas.NewText(LineTemp.UserName, LineTemp.PrintColor.ToRGBA()), widget.NewButton("删除", func() {
+						vbox.Remove(LineBoxItem[LineTemp.OpenID])
+						DeleteLine(LineTemp.OpenID)
+						delete(LineBoxItem, LineTemp.OpenID)
 						CommonLength = len(OldLine.GuardLine)
 					}))
-					vbox.Add(LineBoxItem[LineTemp.Uid])
+					vbox.Add(LineBoxItem[LineTemp.OpenID])
 				}
 
 				for _, i2 := range OldLine.GiftLine {
 					LineTemp := i2
-					LineBoxItem[LineTemp.Uid] = container.NewHBox(canvas.NewText(LineTemp.UserName, LineTemp.PrintColor.ToRGBA()), widget.NewButton("删除", func() {
-						vbox.Remove(LineBoxItem[LineTemp.Uid])
-						DeleteLine(LineTemp.Uid)
-						delete(LineBoxItem, LineTemp.Uid)
+					LineBoxItem[LineTemp.OpenID] = container.NewHBox(canvas.NewText(LineTemp.UserName, LineTemp.PrintColor.ToRGBA()), widget.NewButton("删除", func() {
+						vbox.Remove(LineBoxItem[LineTemp.OpenID])
+						DeleteLine(LineTemp.OpenID)
+						delete(LineBoxItem, LineTemp.OpenID)
 						CommonLength = len(OldLine.GiftLine)
 					}))
-					vbox.Add(LineBoxItem[LineTemp.Uid])
+					vbox.Add(LineBoxItem[LineTemp.OpenID])
 				}
 
 				if len(OldLine.CommonLine) != 0 {
 					for _, i2 := range OldLine.CommonLine {
 						LineTemp := i2
-						LineBoxItem[LineTemp.Uid] = container.NewHBox(canvas.NewText(LineTemp.UserName, LineTemp.PrintColor.ToRGBA()), widget.NewButton("删除", func() {
-							vbox.Remove(LineBoxItem[LineTemp.Uid])
-							DeleteLine(LineTemp.Uid)
-							delete(LineBoxItem, LineTemp.Uid)
+						LineBoxItem[LineTemp.OpenID] = container.NewHBox(canvas.NewText(LineTemp.UserName, LineTemp.PrintColor.ToRGBA()), widget.NewButton("删除", func() {
+							vbox.Remove(LineBoxItem[LineTemp.OpenID])
+							DeleteLine(LineTemp.OpenID)
+							delete(LineBoxItem, LineTemp.OpenID)
 							CommonLength = len(OldLine.CommonLine)
 						}))
-						vbox.Add(LineBoxItem[LineTemp.Uid])
+						vbox.Add(LineBoxItem[LineTemp.OpenID])
 					}
 				}
 
@@ -68,5 +68,4 @@ func MakeCtrlUI() *fyne.Container {
 		}
 	}()
 	return vbox
-
 }

@@ -2,23 +2,33 @@ package main
 
 import (
 	_ "embed"
+	"log"
+	"os"
+	"time"
+
+	"golang.org/x/exp/slog"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/theme"
-	"log"
 )
 
 //go:embed Resource/bilibili-line.svg
 var icon []byte
 
 var (
-	RoomId              chan int
+	RoomId              int
 	MainWindows         fyne.Window
 	line                LineRow
 	globalConfiguration RunConfig
-	IsFirstStart        bool
-	CloseConn           chan bool
+
+	CloseConn chan bool
+
+	IsFirstStart bool
 )
+
+// 全局超时时间
+var timeout = time.After(5 * time.Second)
 
 //const (
 //	AppID        int64 = 123456789
@@ -26,17 +36,32 @@ var (
 //	AccessSecret       = ""
 //)
 
+var logger *slog.Logger
+
+var Broadcast = NewBroadcaster()
+
 func main() {
-	//CleanOldVersion()
-	RoomId = make(chan int)
+	file, err := os.Create("log.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	logger = slog.New(slog.NewTextHandler(file, nil))
+
+	Broadcast.Start()
+	go ResponseQueCtrl()
+
+	// CleanOldVersion()
+
 	CloseConn = make(chan bool, 1)
 
 	svgResource := fyne.NewStaticResource("icon.svg", icon)
 	log.SetFlags(log.Ldate | log.Llongfile)
-	//资源初始化区域
+	// 资源初始化区域
 	App := app.New()
 	App.Settings().SetTheme(theme.DarkTheme())
-	//窗口大体定义区域
+	// 窗口大体定义区域
 	NewVersion, UpdateStatus := CheckVersion()
 
 	if UpdateStatus {
@@ -49,7 +74,7 @@ func main() {
 	MainWindows = App.NewWindow("未初始化")
 	MainWindows.SetIcon(svgResource)
 
-	var err error
+	// var err error
 	globalConfiguration, err = GetConfig()
 	if err != nil {
 		IsFirstStart = true
@@ -64,6 +89,8 @@ func main() {
 
 	CtrlWindows := App.NewWindow("控制界面 点击两次 ╳ 退出")
 	CtrlWindows.SetIcon(svgResource)
+	// 关闭此窗口退出应用
+	CtrlWindows.SetMaster()
 	var ClickCount int
 	CtrlWindows.SetCloseIntercept(func() {
 		ClickCount++

@@ -22,7 +22,6 @@ func GetConfig() (rConfig RunConfig, err error) {
 
 func SetConfig(sConfig RunConfig) bool {
 	ConfigJson, _ := json.MarshalIndent(sConfig, "", " ")
-	fmt.Println(string(ConfigJson))
 	lineupConfig := "./lineConfig.json"
 	_, ReadConfigErr := os.Open(lineupConfig)
 	if ReadConfigErr != nil {
@@ -33,7 +32,7 @@ func SetConfig(sConfig RunConfig) bool {
 			fmt.Println("配置文件创建失败", ConfigErr.Error(), LineCreate.Error())
 			return false
 		} else {
-			err := os.WriteFile(lineupConfig, ConfigJson, 0666)
+			err := os.WriteFile(lineupConfig, ConfigJson, 0o666)
 			if err != nil {
 				fmt.Println("配置文件更新失败", err.Error())
 				return false
@@ -42,7 +41,7 @@ func SetConfig(sConfig RunConfig) bool {
 			}
 		}
 	} else {
-		err := os.WriteFile(lineupConfig, ConfigJson, 0666)
+		err := os.WriteFile(lineupConfig, ConfigJson, 0o666)
 		if err != nil {
 			fmt.Println("配置文件更新失败", err.Error())
 			return false
@@ -55,7 +54,7 @@ func SetConfig(sConfig RunConfig) bool {
 func SetLine(lp LineRow) {
 	lineJson, _ := json.MarshalIndent(lp, "", " ")
 	lineConfigFile := "./line.json"
-	WriteErr := os.WriteFile(lineConfigFile, lineJson, 0666)
+	WriteErr := os.WriteFile(lineConfigFile, lineJson, 0o666)
 	if WriteErr != nil {
 		fmt.Println("队列文件更新失败")
 	}
@@ -74,9 +73,7 @@ func GetLine() (line LineRow, err error) {
 }
 
 func ToLineColor(c color.Color) LineColor {
-	fmt.Println(c)
 	r, g, b, _ := c.RGBA()
-	fmt.Println(r, g, b)
 	return LineColor{
 		R: r,
 		G: g,

@@ -97,9 +97,9 @@ type LineRow struct {
 	GuardLine   []Line
 	GiftLine    []GiftLine
 	CommonLine  []Line
-	GuardIndex  map[int]int
-	GiftIndex   map[int]int
-	CommonIndex map[int]int
+	GuardIndex  map[string]int
+	GiftIndex   map[string]int
+	CommonIndex map[string]int
 }
 
 // UpdateIndex 更新队列索引，传入UpdateType 0为GuardLine 1为GiftLine 2为CommonLine
@@ -107,22 +107,22 @@ func (r LineRow) UpdateIndex(UpdateType int) {
 	switch UpdateType {
 	case 0:
 		for i, l := range r.GuardLine {
-			r.GuardIndex[l.Uid] = i + 1
+			r.GuardIndex[l.OpenID] = i + 1
 		}
 	case 1:
 		for i, l := range r.GiftLine {
-			r.GiftIndex[l.Uid] = i + 1
+			r.GiftIndex[l.OpenID] = i + 1
 		}
 	case 2:
 		for i, l := range r.CommonLine {
-			r.CommonIndex[l.Uid] = i + 1
+			r.CommonIndex[l.OpenID] = i + 1
 		}
 	}
 }
 
 // Line 单一队列基础信息
 type Line struct {
-	Uid        int       `json:"Uid"`
+	OpenID     string    `json:"open_id"`
 	UserName   string    `json:"UserName"`
 	Avatar     string    `json:"Avatar"`
 	PrintColor LineColor `json:"PrintColor"`
@@ -130,7 +130,7 @@ type Line struct {
 
 // GiftLine 礼物用户队列信息
 type GiftLine struct {
-	Uid        int       `json:"Uid"`
+	OpenID     string    `json:"open_id"`
 	UserName   string    `json:"UserName"`
 	Avatar     string    `json:"Avatar"`
 	PrintColor LineColor `json:"PrintColor"`
@@ -153,6 +153,7 @@ type RunConfig struct {
 	GiftPrintColor          LineColor
 	GiftLinePrice           float64
 	CommonPrintColor        LineColor
+	DmDisplayColor          LineColor
 	LineKey                 string
 	GiftPriceDisplay        bool
 	IsOnlyGift              bool
@@ -160,6 +161,8 @@ type RunConfig struct {
 	TransparentBackground   bool
 	CurrentQueueSizeDisplay bool
 	MaxLineCount            int
+	EnableMusicServer       bool
+	DmDisplayNoSleep        bool
 }
 
 type LineColor struct {

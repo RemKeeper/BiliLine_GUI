@@ -4,16 +4,22 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
-	"github.com/vtb-link/bianka/live"
+	"io"
 	"math/rand"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
 	"time"
+
+	"fyne.io/fyne/v2/widget"
+
+	"github.com/vtb-link/bianka/proto"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 )
 
 //go:embed Resource/Wx.jpg
@@ -50,7 +56,7 @@ func RemoveTags(str string) string {
 
 func SendLineToWs(NormalLine Line, Gift GiftLine, LineType int) {
 	switch {
-	case NormalLine.Uid != 0:
+	case len(NormalLine.OpenID) > 0:
 
 		Send := WsPack{
 			OpMessage: OpAdd,
@@ -62,7 +68,7 @@ func SendLineToWs(NormalLine Line, Gift GiftLine, LineType int) {
 			return
 		}
 		QueueChatChan <- SendWsJson
-	case Gift.Uid != 0:
+	case len(Gift.OpenID) > 0:
 		Send := WsPack{
 			OpMessage: OpAdd,
 			LineType:  LineType,
@@ -76,7 +82,7 @@ func SendLineToWs(NormalLine Line, Gift GiftLine, LineType int) {
 	}
 }
 
-func SendDmToWs(Dm *live.CmdLiveOpenPlatformDanmuData) {
+func SendDmToWs(Dm *proto.CmdDanmuData) {
 	SendDmWsJson, err := json.Marshal(Dm)
 	if err != nil {
 		return
@@ -84,13 +90,25 @@ func SendDmToWs(Dm *live.CmdLiveOpenPlatformDanmuData) {
 	DmChatChan <- SendDmWsJson
 }
 
-func SendDelToWs(LineType, index, uid int) {
+func SendMusicServer(Path, Keyword string) {
+	get, err := http.Get("http://127.0.0.1:99/" + Path + "?keyword=" + Keyword)
+	if err != nil {
+		return
+	}
+	resp, _ := io.ReadAll(get.Body)
+	if get.StatusCode != 200 || string(resp) != "播放成功" {
+		// Todo 错误处理
+		return
+	}
+}
+
+func SendDelToWs(LineType, index int, OpenId string) {
 	Send := WsPack{
 		OpMessage: OpDelete,
 		Index:     index,
 		LineType:  LineType,
 		Line: Line{
-			Uid: uid,
+			OpenID: OpenId,
 		},
 	}
 	SendWsJson, err := json.Marshal(Send)
@@ -100,30 +118,30 @@ func SendDelToWs(LineType, index, uid int) {
 	QueueChatChan <- SendWsJson
 }
 
-func DeleteLine(uid int) {
+func DeleteLine(OpenId string) {
 	switch {
-	case line.GuardIndex[uid] != 0:
-		line.GuardLine = append(line.GuardLine[:line.GuardIndex[uid]-1],
-			line.GuardLine[line.GuardIndex[uid]:]...)
-		SendDelToWs(GuardLineType, line.GuardIndex[uid]-1, uid)
-		delete(line.GuardIndex, uid)
+	case line.GuardIndex[OpenId] != 0:
+		line.GuardLine = append(line.GuardLine[:line.GuardIndex[OpenId]-1],
+			line.GuardLine[line.GuardIndex[OpenId]:]...)
+		SendDelToWs(GuardLineType, line.GuardIndex[OpenId]-1, OpenId)
+		delete(line.GuardIndex, OpenId)
 		line.UpdateIndex(GuardLineType)
 		SetLine(line)
 
-	case line.GiftIndex[uid] != 0:
-		line.GiftLine = append(line.GiftLine[:line.GiftIndex[uid]-1],
-			line.GiftLine[line.GiftIndex[uid]:]...)
-		SendDelToWs(GiftLineType, line.GiftIndex[uid]-1, uid)
-		delete(line.GiftIndex, uid)
+	case line.GiftIndex[OpenId] != 0:
+		line.GiftLine = append(line.GiftLine[:line.GiftIndex[OpenId]-1],
+			line.GiftLine[line.GiftIndex[OpenId]:]...)
+		SendDelToWs(GiftLineType, line.GiftIndex[OpenId]-1, OpenId)
+		delete(line.GiftIndex, OpenId)
 		line.UpdateIndex(GiftLineType)
 		SetLine(line)
 
-	case line.CommonIndex[uid] != 0:
+	case line.CommonIndex[OpenId] != 0:
 
-		line.CommonLine = append(line.CommonLine[:line.CommonIndex[uid]-1],
-			line.CommonLine[line.CommonIndex[uid]:]...)
-		SendDelToWs(CommonLineType, line.CommonIndex[uid]-1, uid)
-		delete(line.CommonIndex, uid)
+		line.CommonLine = append(line.CommonLine[:line.CommonIndex[OpenId]-1],
+			line.CommonLine[line.CommonIndex[OpenId]:]...)
+		SendDelToWs(CommonLineType, line.CommonIndex[OpenId]-1, OpenId)
+		delete(line.CommonIndex, OpenId)
 		line.UpdateIndex(CommonLineType)
 		SetLine(line)
 	}
@@ -131,23 +149,27 @@ func DeleteLine(uid int) {
 
 func DeleteFirst() {
 	if len(line.GuardLine) != 0 {
-		DeleteLine(line.GuardLine[0].Uid)
+		DeleteLine(line.GuardLine[0].OpenID)
 	} else if len(line.GiftLine) != 0 {
-		DeleteLine(line.GiftLine[0].Uid)
+		DeleteLine(line.GiftLine[0].OpenID)
 	} else if len(line.CommonLine) != 0 {
-		DeleteLine(line.CommonLine[0].Uid)
+		DeleteLine(line.CommonLine[0].OpenID)
 	}
 }
 
 func assistUI() *fyne.Container {
-
 	Wx := canvas.NewImageFromReader(bytes.NewReader(WxJpg), "Wx.jpg")
 	Wx.FillMode = canvas.ImageFillOriginal
 	AliPay := canvas.NewImageFromReader(bytes.NewReader(AliPayJpg), "Alipay.jpg")
 	AliPay.FillMode = canvas.ImageFillOriginal
 	AliPayRed := canvas.NewImageFromReader(bytes.NewReader(AliPayRedPack), "AliPayRedPack.jpg")
 	AliPayRed.FillMode = canvas.ImageFillOriginal
-	Cont := container.NewHBox(Wx, AliPay, AliPayRed)
+
+	BuyCard := widget.NewButton("买张流量卡", func() {
+		OpenUrl("https://91haoka.cn/gth/#/minishop?share_id=559873")
+	})
+
+	Cont := container.NewHBox(Wx, AliPay, AliPayRed, BuyCard)
 	return Cont
 }
 
@@ -159,8 +181,8 @@ func randomInt(min, max int) int {
 func CleanOldVersion() {
 	_, err := os.Stat("./Version " + NowVersion)
 	if err != nil {
-		//_ = os.Remove("./line.json")
-		//_ = os.Remove("./lineConfig.json")
+		_ = os.Remove("./line.json")
+		_ = os.Remove("./lineConfig.json")
 
 		_, _ = os.Create("./Version " + NowVersion)
 		return

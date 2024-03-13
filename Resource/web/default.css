@@ -24,3 +24,9 @@
 .user div {
     margin-left: 20px;
 }
+
+#LineSize{
+    font-size: 30px;
+    align-items: center;
+    font-family:'LineFont' !important;
+}
