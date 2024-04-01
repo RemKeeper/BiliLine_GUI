@@ -8,8 +8,8 @@ require (
 	github.com/flopp/go-findfont v0.1.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/websocket v1.5.1
-	github.com/vtb-link/bianka v0.1.4-0.20240220193842-1b013592a7f4
-	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
+	github.com/vtb-link/bianka v0.2.1
+	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/image v0.12.0
 )
 

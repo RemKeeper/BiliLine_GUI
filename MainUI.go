@@ -5,18 +5,17 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"image/color"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/atotto/clipboard"
+	"image/color"
+	"io"
+	"log"
+	"net/http"
+	"strconv"
 )
 
 //go:embed Resource/404.jpg

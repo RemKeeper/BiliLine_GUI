@@ -2,11 +2,9 @@ package main
 
 import (
 	_ "embed"
+	"golang.org/x/exp/slog"
 	"log"
 	"os"
-	"time"
-
-	"golang.org/x/exp/slog"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -28,7 +26,7 @@ var (
 )
 
 // 全局超时时间
-var timeout = time.After(5 * time.Second)
+//var timeout = time.After(5 * time.Second)
 
 //const (
 //	AppID        int64 = 123456789
