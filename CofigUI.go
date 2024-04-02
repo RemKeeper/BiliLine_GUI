@@ -23,12 +23,6 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		if err != nil {
 			return
 		}
-		//notification := toast.Notification{
-		//	AppID:   "排队姬",
-		//	Title:   "请看页面右下角",
-		//	Message: "点击右下角身份码按钮",
-		//}
-		//_ = notification.Push()
 	})
 
 	LineKeyInput := widget.NewEntry()
