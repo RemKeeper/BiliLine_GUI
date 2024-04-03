@@ -1,8 +1,11 @@
 package main
 
 import (
+	"BiliLine_Windows/Global"
+	"BiliLine_Windows/key"
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"time"
 
@@ -11,8 +14,6 @@ import (
 	"github.com/vtb-link/bianka/live"
 	"github.com/vtb-link/bianka/proto"
 )
-
-var LiveUserId int
 
 func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 	line.GuardIndex = make(map[string]int)
@@ -51,7 +52,7 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 			break
 		}
 
-		lineTemp := GiftLine{
+		lineTemp := GlobalType.GiftLine{
 			OpenID: GiftData.OpenID,
 			// OpenID:     strconv.Itoa(GiftData.Uid),
 			UserName:   GiftData.Uname,
@@ -62,7 +63,7 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 		if (float64(GiftData.GiftNum*GiftData.Price))/1000 >= globalConfiguration.GiftLinePrice {
 			line.GiftLine = append(line.GiftLine, lineTemp)
 			line.GiftIndex[GiftData.OpenID] = len(line.GiftLine)
-			SendLineToWs(Line{}, lineTemp, GiftLineType)
+			SendLineToWs(GlobalType.Line{}, lineTemp, GlobalType.GiftLineType)
 			SetLine(line)
 		}
 	case live.CmdLiveOpenPlatformGuard:
@@ -73,7 +74,7 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 }
 
 func RoomConnect(IdCode string) {
-	sdkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
+	sdkConfig := live.NewConfig(key.AccessKey, key.AccessSecret, key.AppID)
 	// 创建sdk实例
 	sdk := live.NewClient(sdkConfig)
 	// app start
@@ -124,7 +125,7 @@ func RoomConnect(IdCode string) {
 		// 注意检查关闭类型, 避免无限重连
 		if closeType == live.CloseActively || closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
 			log.Println("WebsocketClient exit")
-			return
+			os.Exit(0)
 		}
 
 		err := wcs.Reconnection(startResp)

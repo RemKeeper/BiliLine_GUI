@@ -1,6 +1,7 @@
 package main
 
 import (
+	"BiliLine_Windows/Global"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -9,23 +10,23 @@ import (
 const updateUrl = "https://lineupversion.rem.asia/"
 
 const (
-	NowVersion      = "1.2.9"
-	NowVersionCount = 35
+	NowVersion      = "1.3.0"
+	NowVersionCount = 36
 )
 
-func CheckVersion() (VersionSct, bool) {
+func CheckVersion() (GlobalType.VersionSct, bool) {
 	get, err := http.Get(updateUrl)
 	if err != nil {
-		return VersionSct{}, false
+		return GlobalType.VersionSct{}, false
 	}
 	all, err := io.ReadAll(get.Body)
 	if err != nil {
-		return VersionSct{}, false
+		return GlobalType.VersionSct{}, false
 	}
-	var VersionCache VersionSct
+	var VersionCache GlobalType.VersionSct
 	err = json.Unmarshal(all, &VersionCache)
 	if err != nil {
-		return VersionSct{}, false
+		return GlobalType.VersionSct{}, false
 	}
 	if VersionCache.VersionCount > NowVersionCount {
 		return VersionCache, true

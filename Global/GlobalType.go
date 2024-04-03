@@ -1,6 +1,7 @@
-package main
+package GlobalType
 
 import (
+	"BiliLine_Windows/Broadcaster"
 	"image/color"
 )
 
@@ -17,6 +18,14 @@ const (
 	// OpAdd 添加操作标识码
 	OpAdd = 1
 )
+
+var Broad *Broadcaster.Broadcaster
+
+func init() {
+	if Broad == nil {
+		Broad = Broadcaster.NewBroadcaster()
+	}
+}
 
 // RoomInfo 直播间信息
 type RoomInfo struct {

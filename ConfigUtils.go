@@ -1,26 +1,27 @@
 package main
 
 import (
+	"BiliLine_Windows/Global"
 	"encoding/json"
 	"fmt"
 	"image/color"
 	"os"
 )
 
-func GetConfig() (rConfig RunConfig, err error) {
+func GetConfig() (rConfig GlobalType.RunConfig, err error) {
 	file, err := os.ReadFile("./lineConfig.json")
 	if err != nil {
-		return RunConfig{}, err
+		return GlobalType.RunConfig{}, err
 	}
-	var Config RunConfig
+	var Config GlobalType.RunConfig
 	err = json.Unmarshal(file, &Config)
 	if err != nil {
-		return RunConfig{}, err
+		return GlobalType.RunConfig{}, err
 	}
 	return Config, err
 }
 
-func SetConfig(sConfig RunConfig) bool {
+func SetConfig(sConfig GlobalType.RunConfig) bool {
 	ConfigJson, _ := json.MarshalIndent(sConfig, "", " ")
 	lineupConfig := "./lineConfig.json"
 	_, ReadConfigErr := os.Open(lineupConfig)
@@ -51,7 +52,7 @@ func SetConfig(sConfig RunConfig) bool {
 	}
 }
 
-func SetLine(lp LineRow) {
+func SetLine(lp GlobalType.LineRow) {
 	lineJson, _ := json.MarshalIndent(lp, "", " ")
 	lineConfigFile := "./line.json"
 	WriteErr := os.WriteFile(lineConfigFile, lineJson, 0o666)
@@ -60,21 +61,21 @@ func SetLine(lp LineRow) {
 	}
 }
 
-func GetLine() (line LineRow, err error) {
+func GetLine() (line GlobalType.LineRow, err error) {
 	lineConfigFile := "./line.json"
-	var LineGet LineRow
+	var LineGet GlobalType.LineRow
 	file, err := os.ReadFile(lineConfigFile)
 	if err != nil {
-		return LineRow{}, err
+		return GlobalType.LineRow{}, err
 	} else {
 		_ = json.Unmarshal(file, &LineGet)
 		return LineGet, nil
 	}
 }
 
-func ToLineColor(c color.Color) LineColor {
+func ToLineColor(c color.Color) GlobalType.LineColor {
 	r, g, b, _ := c.RGBA()
-	return LineColor{
+	return GlobalType.LineColor{
 		R: r,
 		G: g,
 		B: b,

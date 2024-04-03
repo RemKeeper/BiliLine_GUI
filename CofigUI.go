@@ -1,6 +1,7 @@
 package main
 
 import (
+	"BiliLine_Windows/Global"
 	"image/color"
 	"strconv"
 	"time"
@@ -12,7 +13,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
+func MakeConfigUI(Windows fyne.Window, Config GlobalType.RunConfig) *fyne.Container {
 	Windows.SetTitle("配置页面")
 
 	IdCodeInput := widget.NewEntry()
@@ -124,7 +125,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			LineKeyInput.Text = "排队"
 		}
 
-		SaveConfig := RunConfig{
+		SaveConfig := GlobalType.RunConfig{
 			IdCode:                  IdCodeInput.Text,
 			GuardPrintColor:         ToLineColor(Guard.Color),
 			GiftPriceDisplay:        GiftPriceDisplaySwitch.Checked,

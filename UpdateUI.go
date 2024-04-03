@@ -1,6 +1,7 @@
 package main
 
 import (
+	"BiliLine_Windows/Global"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -9,7 +10,7 @@ import (
 	"golang.org/x/image/colornames"
 )
 
-func MakeUpdateUI(NewVersion VersionSct) *fyne.Container {
+func MakeUpdateUI(NewVersion GlobalType.VersionSct) *fyne.Container {
 
 	versionLabel := widget.NewLabel(NewVersion.Version)
 	versionCountLabel := widget.NewLabel(fmt.Sprintf("版本号:%d", NewVersion.VersionCount))

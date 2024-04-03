@@ -1,6 +1,7 @@
 package main
 
 import (
+	"BiliLine_Windows/Global"
 	"bytes"
 	_ "embed"
 	"encoding/json"
@@ -54,12 +55,12 @@ func RemoveTags(str string) string {
 	return result
 }
 
-func SendLineToWs(NormalLine Line, Gift GiftLine, LineType int) {
+func SendLineToWs(NormalLine GlobalType.Line, Gift GlobalType.GiftLine, LineType int) {
 	switch {
 	case len(NormalLine.OpenID) > 0:
 
-		Send := WsPack{
-			OpMessage: OpAdd,
+		Send := GlobalType.WsPack{
+			OpMessage: GlobalType.OpAdd,
 			LineType:  LineType,
 			Line:      NormalLine,
 		}
@@ -69,8 +70,8 @@ func SendLineToWs(NormalLine Line, Gift GiftLine, LineType int) {
 		}
 		QueueChatChan <- SendWsJson
 	case len(Gift.OpenID) > 0:
-		Send := WsPack{
-			OpMessage: OpAdd,
+		Send := GlobalType.WsPack{
+			OpMessage: GlobalType.OpAdd,
 			LineType:  LineType,
 			GiftLine:  Gift,
 		}
@@ -103,11 +104,11 @@ func SendMusicServer(Path, Keyword string) {
 }
 
 func SendDelToWs(LineType, index int, OpenId string) {
-	Send := WsPack{
-		OpMessage: OpDelete,
+	Send := GlobalType.WsPack{
+		OpMessage: GlobalType.OpDelete,
 		Index:     index,
 		LineType:  LineType,
-		Line: Line{
+		Line: GlobalType.Line{
 			OpenID: OpenId,
 		},
 	}
@@ -123,26 +124,26 @@ func DeleteLine(OpenId string) {
 	case line.GuardIndex[OpenId] != 0:
 		line.GuardLine = append(line.GuardLine[:line.GuardIndex[OpenId]-1],
 			line.GuardLine[line.GuardIndex[OpenId]:]...)
-		SendDelToWs(GuardLineType, line.GuardIndex[OpenId]-1, OpenId)
+		SendDelToWs(GlobalType.GuardLineType, line.GuardIndex[OpenId]-1, OpenId)
 		delete(line.GuardIndex, OpenId)
-		line.UpdateIndex(GuardLineType)
+		line.UpdateIndex(GlobalType.GuardLineType)
 		SetLine(line)
 
 	case line.GiftIndex[OpenId] != 0:
 		line.GiftLine = append(line.GiftLine[:line.GiftIndex[OpenId]-1],
 			line.GiftLine[line.GiftIndex[OpenId]:]...)
-		SendDelToWs(GiftLineType, line.GiftIndex[OpenId]-1, OpenId)
+		SendDelToWs(GlobalType.GiftLineType, line.GiftIndex[OpenId]-1, OpenId)
 		delete(line.GiftIndex, OpenId)
-		line.UpdateIndex(GiftLineType)
+		line.UpdateIndex(GlobalType.GiftLineType)
 		SetLine(line)
 
 	case line.CommonIndex[OpenId] != 0:
 
 		line.CommonLine = append(line.CommonLine[:line.CommonIndex[OpenId]-1],
 			line.CommonLine[line.CommonIndex[OpenId]:]...)
-		SendDelToWs(CommonLineType, line.CommonIndex[OpenId]-1, OpenId)
+		SendDelToWs(GlobalType.CommonLineType, line.CommonIndex[OpenId]-1, OpenId)
 		delete(line.CommonIndex, OpenId)
-		line.UpdateIndex(CommonLineType)
+		line.UpdateIndex(GlobalType.CommonLineType)
 		SetLine(line)
 	}
 }

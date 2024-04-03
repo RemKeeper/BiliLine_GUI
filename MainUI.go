@@ -1,6 +1,7 @@
 package main
 
 import (
+	"BiliLine_Windows/Global"
 	"bytes"
 	_ "embed"
 	"encoding/json"
@@ -21,9 +22,9 @@ import (
 //go:embed Resource/404.jpg
 var Pic404 []byte
 
-func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
+func MakeMainUI(Windows fyne.Window, Config GlobalType.RunConfig) *fyne.Container {
 	Windows.SetTitle("主页面")
-	var RoomInformationObtained RoomInfo
+	var RoomInformationObtained GlobalType.RoomInfo
 	for RoomId == 0 {
 	}
 	fmt.Println("主线程房间号", RoomId)
@@ -121,19 +122,19 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	}
 }
 
-func GetRoomInfo(RoomId string) (RoomInfo, error) {
+func GetRoomInfo(RoomId string) (GlobalType.RoomInfo, error) {
 	get, err := http.Get("https://api.live.bilibili.com/room/v1/Room/get_info?id=" + RoomId)
 	if err != nil {
-		return RoomInfo{}, err
+		return GlobalType.RoomInfo{}, err
 	}
 	all, err := io.ReadAll(get.Body)
 	if err != nil {
-		return RoomInfo{}, err
+		return GlobalType.RoomInfo{}, err
 	}
-	var GetRoomInfo RoomInfo
+	var GetRoomInfo GlobalType.RoomInfo
 	err = json.Unmarshal(all, &GetRoomInfo)
 	if err != nil {
-		return RoomInfo{}, err
+		return GlobalType.RoomInfo{}, err
 	}
 	return GetRoomInfo, nil
 }

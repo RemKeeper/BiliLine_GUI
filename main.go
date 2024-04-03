@@ -1,6 +1,8 @@
 package main
 
 import (
+	"BiliLine_Windows/Broadcaster"
+	"BiliLine_Windows/Global"
 	_ "embed"
 	"golang.org/x/exp/slog"
 	"log"
@@ -17,8 +19,8 @@ var icon []byte
 var (
 	RoomId              int
 	MainWindows         fyne.Window
-	line                LineRow
-	globalConfiguration RunConfig
+	line                GlobalType.LineRow
+	globalConfiguration GlobalType.RunConfig
 
 	CloseConn chan bool
 
@@ -36,7 +38,7 @@ var (
 
 var logger *slog.Logger
 
-var Broadcast = NewBroadcaster()
+var Broadcast = Broadcaster.NewBroadcaster()
 
 func main() {
 	file, err := os.Create("log.txt")
@@ -77,9 +79,10 @@ func main() {
 	if err != nil {
 		IsFirstStart = true
 		log.Println(err.Error())
-		MainWindows.SetContent(MakeConfigUI(MainWindows, RunConfig{}))
+		MainWindows.SetContent(MakeConfigUI(MainWindows, GlobalType.RunConfig{}))
 	} else {
 		go RoomConnect(globalConfiguration.IdCode)
+		go officialConnect(globalConfiguration.IdCode)
 		KeyWordMatchMap = make(map[string]bool)
 		KeyWordMatchInit(globalConfiguration.LineKey)
 		MainWindows.SetContent(MakeMainUI(MainWindows, globalConfiguration))

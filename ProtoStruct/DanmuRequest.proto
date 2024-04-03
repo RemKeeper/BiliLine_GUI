@@ -1,0 +1,122 @@
+syntax = "proto3";
+option go_package = "./GenProtoStructGo;grpc_server";
+
+
+service DanmuServer {
+//  传递弹幕数据
+  rpc SendDanmu (CmdDanmuData) returns (Response);
+//  传递礼物数据
+  rpc SendGift (CmdSendGiftData) returns (Response);
+//  传递付费大航海数据
+  rpc SendGuard (CmdGuardData) returns (Response);
+}
+
+//弹幕数据
+message CmdDanmuData {
+  int32 room_id = 1;
+  string open_id = 2;
+  int32 uid = 3;
+  string uname = 4;
+  string msg = 5;
+  string msg_id = 6;
+  int32 fans_medal_level = 7;
+  string fans_medal_name = 8;
+  bool fans_medal_wearing_status = 9;
+  int32 guard_level = 10;
+  int32 timestamp = 11;
+  string uface = 12;
+  string emoji_img_url = 13;
+  int32 dm_type = 14;
+}
+//礼物字段数据
+message CmdSendGiftData {
+  int32 room_id = 1;
+  string open_id = 2;
+  int32 uid = 3;
+  string uname = 4;
+  string uface = 5;
+  int32 gift_id = 6;
+  string gift_name = 7;
+  int32 gift_num = 8;
+  int32 price = 9;
+  bool paid = 10;
+  int32 fans_medal_level = 11;
+  string fans_medal_name = 12;
+  bool fans_medal_wearing_status = 13;
+  int32 guard_level = 14;
+  int32 timestamp = 15;
+  string msg_id = 16;
+  string gift_icon = 17;
+  bool combo_gift = 18;
+  AnchorInfo anchor_info = 19;
+  ComboInfo combo_info = 20;
+}
+
+message AnchorInfo {
+  string open_id = 1;
+  int32 uid = 2;
+  string uname = 3;
+  string uface = 4;
+}
+
+message ComboInfo {
+  int32 combo_base_num = 1;
+  int32 combo_count = 2;
+  string combo_id = 3;
+  int32 combo_timeout = 4;
+}
+
+//SC数据
+message CmdSuperChatData {
+  int32 room_id = 1;
+  string open_id = 2;
+  int32 uid = 3;
+  string uname = 4;
+  string uface = 5;
+  int32 message_id = 6;
+  string message = 7;
+  string msg_id = 8;
+  int32 rmb = 9;
+  int32 timestamp = 10;
+  int32 start_time = 11;
+  int32 end_time = 12;
+  int32 guard_level = 13;
+  int32 fans_medal_level = 14;
+  string fans_medal_name = 15;
+  bool fans_medal_wearing_status = 16;
+}
+//SC删除数据
+message CmdSuperChatDelData {
+  int32 room_id = 1;
+  repeated int32 message_ids = 2;
+  string msg_id = 3;
+}
+
+//付费大航海数据
+message CmdGuardData {
+  UserInfo user_info = 1;
+  int32 guard_level = 2;
+  int32 guard_num = 3;
+  string guard_unit = 4;
+  int32 fans_medal_level = 5;
+  string fans_medal_name = 6;
+  bool fans_medal_wearing_status = 7;
+  int32 timestamp = 8;
+  int32 room_id = 9;
+  string msg_id = 10;
+}
+
+message UserInfo {
+  string open_id = 1;
+  int32 uid = 2;
+  string uname = 3;
+  string uface = 4;
+}
+
+
+
+message Response {
+  uint64 data_count =1;
+  int32 status =2;
+
+}

@@ -1,4 +1,4 @@
-package main
+package Broadcaster
 
 type Broadcaster struct {
 	subscribers []chan interface{}

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"BiliLine_Windows/Global"
+	UglyMsg_idDe_Duplication "BiliLine_Windows/UglyMsg_idDe-Duplication"
 	"fmt"
 	"strings"
 
@@ -9,10 +11,14 @@ import (
 
 func ResponseQueCtrl() {
 	QueSubscriber := Broadcast.Subscribe(20)
-
+	msgSet := UglyMsg_idDe_Duplication.NewMsgSet()
 	for {
 		DmRaw := <-QueSubscriber
 		DmParsed := DmRaw.(*proto.CmdDanmuData)
+
+		if !msgSet.Add(DmParsed.MsgID) {
+			continue
+		}
 
 		if globalConfiguration.EnableMusicServer {
 			if strings.HasPrefix(DmParsed.Msg, "点歌 ") {
@@ -22,7 +28,6 @@ func ResponseQueCtrl() {
 			//	SendMusicServer("next", "")
 			//}
 		}
-
 		SendDmToWs(DmParsed)
 
 		fmt.Println("弹幕:", DmParsed.Msg)
@@ -47,7 +52,7 @@ func ResponseQueCtrl() {
 		switch {
 		// 用户为舰长或提督
 		case DmParsed.GuardLevel <= 3 && DmParsed.GuardLevel != 0:
-			lineTemp := Line{
+			lineTemp := GlobalType.Line{
 				// OpenID:     DmParsed.OpenID,
 				OpenID:     openID,
 				UserName:   DmParsed.Uname,
@@ -57,10 +62,10 @@ func ResponseQueCtrl() {
 			line.GuardLine = append(line.GuardLine, lineTemp)
 			//line.GuardIndex[DmParsed.OpenID] = len(line.GuardLine)
 			line.GuardIndex[openID] = len(line.GuardLine)
-			SendLineToWs(lineTemp, GiftLine{}, GuardLineType)
+			SendLineToWs(lineTemp, GlobalType.GiftLine{}, GlobalType.GuardLineType)
 			SetLine(line)
 		case len(line.CommonLine) <= globalConfiguration.MaxLineCount:
-			lineTemp := Line{
+			lineTemp := GlobalType.Line{
 				// OpenID:     DmParsed.OpenID,
 				OpenID:     openID,
 				UserName:   DmParsed.Uname,
@@ -70,7 +75,7 @@ func ResponseQueCtrl() {
 			line.CommonLine = append(line.CommonLine, lineTemp)
 			//line.CommonIndex[DmParsed.OpenID] = len(line.CommonLine)
 			line.CommonIndex[openID] = len(line.CommonLine)
-			SendLineToWs(lineTemp, GiftLine{}, CommonLineType)
+			SendLineToWs(lineTemp, GlobalType.GiftLine{}, GlobalType.CommonLineType)
 			SetLine(line)
 
 		}
