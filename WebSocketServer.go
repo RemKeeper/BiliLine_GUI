@@ -24,9 +24,6 @@ var cssFile []byte
 //go:embed Resource/web/DmDisplay.html
 var DmDisplayHtml []byte
 
-//go:embed Resource/web/DmDisplay_mobile.html
-var DmDisplayMobileHtml []byte
-
 //go:embed Resource/web/js/NoSleep.min.js
 var NoSleepJs []byte
 

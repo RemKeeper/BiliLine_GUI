@@ -118,6 +118,20 @@ func SendDelToWs(LineType, index int, OpenId string) {
 	QueueChatChan <- SendWsJson
 }
 
+func SendWhereToWs(OpenId string) {
+	Send := WsPack{
+		OpMessage: OpWhere,
+		Line: Line{
+			OpenID: OpenId,
+		},
+	}
+	SendWsJson, err := json.Marshal(Send)
+	if err != nil {
+		return
+	}
+	QueueChatChan <- SendWsJson
+}
+
 func DeleteLine(OpenId string) {
 	switch {
 	case line.GuardIndex[OpenId] != 0:

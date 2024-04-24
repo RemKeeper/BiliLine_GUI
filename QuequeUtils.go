@@ -33,6 +33,11 @@ func ResponseQueCtrl() {
 			DeleteLine(DmParsed.OpenID)
 		}
 
+		// 用户发送寻址指令响应
+		if DmParsed.Msg == "我在哪" {
+			SendWhereToWs(DmParsed.OpenID)
+		}
+
 		// 用户发送关键词响应
 		if !KeyWordMatchMap[DmParsed.Msg] {
 			continue

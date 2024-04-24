@@ -86,6 +86,11 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			return
 		}
 	})
+
+	ReconnectButton := widget.NewButton("重连弹幕服务器", func() {
+		CloseConn <- true
+		go RoomConnect(globalConfiguration.IdCode)
+	})
 	if !globalConfiguration.EnableMusicServer {
 		CopyMusicUrlButton.Hide()
 	}
@@ -115,9 +120,9 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			canvas.NewText(difference.String(), color.White),
 		)
 
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, ReconnectButton, assist)
 	} else {
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, ReconnectButton, assist)
 	}
 }
 
