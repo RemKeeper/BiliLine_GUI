@@ -39,6 +39,9 @@ var (
 )
 
 func StartWebServer() {
+
+	_, _ = http.Get("http://127.0.0.1:100/EXIT")
+
 	handler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowCredentials(),
@@ -176,13 +179,6 @@ func WebServer() *http.ServeMux {
 		}
 	})
 
-	//mux.HandleFunc("/dm_mobile", func(writer http.ResponseWriter, request *http.Request) {
-	//	_, err := writer.Write(DmDisplayMobileHtml)
-	//	if err != nil {
-	//		return
-	//	}
-	//})
-
 	mux.HandleFunc("/font.ttf", func(writer http.ResponseWriter, request *http.Request) {
 		err := filepath.Walk(".", func(path string, info fs.FileInfo, err error) error {
 			if err != nil {
@@ -270,6 +266,10 @@ func WebServer() *http.ServeMux {
 		if err != nil {
 			return
 		}
+	})
+
+	mux.HandleFunc("/EXIT", func(writer http.ResponseWriter, request *http.Request) {
+		os.Exit(0)
 	})
 
 	return mux

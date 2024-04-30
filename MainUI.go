@@ -88,8 +88,7 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	})
 
 	ReconnectButton := widget.NewButton("重连弹幕服务器", func() {
-		CloseConn <- true
-		go RoomConnect(globalConfiguration.IdCode)
+		Restart()
 	})
 	if !globalConfiguration.EnableMusicServer {
 		CopyMusicUrlButton.Hide()

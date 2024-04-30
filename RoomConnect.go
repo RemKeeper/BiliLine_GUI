@@ -1,14 +1,9 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"github.com/go-toast/toast"
+	"github.com/vtb-link/bianka/basic"
 	"log"
 	"regexp"
-	"time"
-
-	"github.com/vtb-link/bianka/basic"
 
 	"github.com/vtb-link/bianka/live"
 	"github.com/vtb-link/bianka/proto"
@@ -72,126 +67,45 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 	return nil
 }
 
-func RoomConnect(IdCode string) {
-	ctx, cancel := context.WithCancel(context.Background())
-	sdkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
-	// 创建sdk实例
-	sdk := live.NewClient(sdkConfig)
-	// app start
-	startResp, err := sdk.AppStart(IdCode)
+func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient *basic.WsClient, HeartbeatCloseChan chan bool) {
+	//	初始化应用连接信息配置，自编译请申明以下3个值
+	LinkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
+	//	创建Api连接实例
+	client := live.NewClient(LinkConfig)
+	//	开始身份码认证流程
+
+	AppStart, err := client.AppStart(IdCode)
+	RoomId = AppStart.AnchorInfo.RoomID
 	if err != nil {
-		panic(err)
+		log.Println("应用流程开启失败", err)
+		return nil, "", nil, nil
 	}
-
-	fmt.Println("当前连接用户为", startResp.AnchorInfo)
-
-	// 启用项目心跳 20s一次
-	// see https://open-live.bilibili.com/document/eba8e2e1-847d-e908-2e5c-7a1ec7d9266f
-	tk := time.NewTicker(time.Second * 10)
-	go func(GameID string, ctx context.Context) {
-		notification := toast.Notification{
-			AppID:   "心跳消息通知",
-			Title:   "心跳进程开启",
-			Message: "心跳进程" + GameID + "开启成功",
-		}
-		_ = notification.Push()
-		for {
-			select {
-			case <-tk.C:
-				// 心跳
-				if err := sdk.AppHeartbeat(GameID); err != nil {
-					notification := toast.Notification{
-						AppID:   "心跳消息通知",
-						Title:   "心跳响应失败",
-						Message: "心跳消息响应失败，弹幕服务器可能会断连，建议重启",
-					}
-					_ = notification.Push()
-				}
-			case <-ctx.Done():
-				notification := toast.Notification{
-					AppID:   "心跳消息通知",
-					Title:   "心跳已成功退出",
-					Message: "心跳进程" + GameID + "已成功退出",
-				}
-				_ = notification.Push()
-				return
-			}
-		}
-	}(startResp.GameInfo.GameID, ctx)
-	RoomId = startResp.AnchorInfo.RoomID
-	// app end
-	defer func() {
-		tk.Stop()
-		cancel()
-		sdk.AppEnd(startResp.GameInfo.GameID)
-		notification := toast.Notification{
-			AppID:   "连接关闭通知",
-			Title:   "当前连接已关闭",
-			Message: "当前连接已关闭，弹幕服务器已断连，建议重连",
-		}
-		_ = notification.Push()
-	}()
+	//开启心跳
+	HeartbeatCloseChan = make(chan bool, 1)
+	NewHeartbeat(client, AppStart.GameInfo.GameID, HeartbeatCloseChan)
 
 	dispatcherHandleMap := basic.DispatcherHandleMap{
 		proto.OperationMessage: messageHandle,
 	}
-
-	// 关闭回调事件
-	// 此事件会在websocket连接关闭后触发
-	// 时序如下：
-	// 0. send close message // 主动发送关闭消息
-	// 1. close eventLoop // 不再处理任何消息
-	// 2. close websocket // 关闭websocket连接
-	// 3. onCloseCallback // 触发关闭回调事件
-	// 增加了closeType 参数, 用于区分关闭类型
 	onCloseCallback := func(wcs *basic.WsClient, startResp basic.StartResp, closeType int) {
-		// 注册关闭回调
 		log.Println("WebsocketClient onClose", startResp)
-		cancel()
 		// 注意检查关闭类型, 避免无限重连
-		if closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
-			notification := toast.Notification{
-				AppID:   "已触发关闭回调",
-				Title:   "弹幕服务器连接关闭",
-				Message: "弹幕服务器连接关闭，正在尝试自动重连……",
-			}
-			_ = notification.Push()
+		if closeType == live.CloseActively || closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
+			log.Println("WebsocketClient exit")
 			return
 		}
-
-		err = wcs.Reconnection(startResp)
+		err := wcs.Reconnection(startResp)
 		if err != nil {
-			notification := toast.Notification{
-				AppID:   "重连失败",
-				Title:   "自动重连失败",
-				Message: "自动重连失败，弹幕服务器可能会断连，建议手动重连",
-			}
-			_ = notification.Push()
+			log.Println("Reconnection fail", err)
 		}
 	}
-
-	wsClient, err := basic.StartWebsocket(startResp, dispatcherHandleMap, onCloseCallback, basic.DefaultLoggerGenerator())
+	// 一键开启websocket
+	wsClient, err := basic.StartWebsocket(AppStart, dispatcherHandleMap, onCloseCallback, logger)
 	if err != nil {
 		panic(err)
 	}
+	return client, AppStart.GameInfo.GameID, wsClient, HeartbeatCloseChan
 
-	defer wsClient.Close()
-	notificationStart := toast.Notification{
-		AppID:   "连接成功",
-		Title:   "弹幕服务连接成功",
-		Message: "弹幕服务器连接成功，正在接收弹幕……",
-	}
-	_ = notificationStart.Push()
-
-	<-CloseConn
-	cancel()
-	notificationClose := toast.Notification{
-		AppID:   "连接关闭",
-		Title:   "弹幕服务器连接关闭",
-		Message: "弹幕服务器连接关闭，正在退出……",
-	}
-	_ = notificationClose.Push()
-	// 监听退出信号
 }
 
 var KeyWordMatchMap = make(map[string]bool)

@@ -2,6 +2,9 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
+	"github.com/vtb-link/bianka/basic"
+	"github.com/vtb-link/bianka/live"
 	"golang.org/x/exp/slog"
 	"log"
 	"os"
@@ -19,20 +22,7 @@ var (
 	MainWindows         fyne.Window
 	line                LineRow
 	globalConfiguration RunConfig
-
-	CloseConn chan bool
-
-	IsFirstStart bool
 )
-
-// 全局超时时间
-//var timeout = time.After(5 * time.Second)
-
-//const (
-//	AppID        int64 = 123456789
-//	AccessKey          = ""
-//	AccessSecret       = ""
-//)
 
 var logger *slog.Logger
 
@@ -51,8 +41,6 @@ func main() {
 	go ResponseQueCtrl()
 
 	// CleanOldVersion()
-
-	CloseConn = make(chan bool, 1)
 
 	svgResource := fyne.NewStaticResource("icon.svg", icon)
 	log.SetFlags(log.Ldate | log.Llongfile)
@@ -74,16 +62,34 @@ func main() {
 
 	// var err error
 	globalConfiguration, err = GetConfig()
+
+	var AppClient *live.Client
+	var GameId string
+	var CloseHeartbeatChan chan bool
+	var WsClient *basic.WsClient
 	if err != nil {
-		IsFirstStart = true
 		log.Println(err.Error())
 		MainWindows.SetContent(MakeConfigUI(MainWindows, RunConfig{}))
 	} else {
-		go RoomConnect(globalConfiguration.IdCode)
+		go func() {
+			client, gameId, wsClient, closeChan := RoomConnect(globalConfiguration.IdCode)
+			AppClient = client
+			CloseHeartbeatChan = closeChan
+			GameId = gameId
+			WsClient = wsClient
+		}()
 		KeyWordMatchMap = make(map[string]bool)
 		KeyWordMatchInit(globalConfiguration.LineKey)
 		MainWindows.SetContent(MakeMainUI(MainWindows, globalConfiguration))
 	}
+
+	defer func() {
+		fmt.Println("触发关闭函数")
+		//CloseConn <- true
+		CloseHeartbeatChan <- true
+		WsClient.Close()
+		AppClient.AppEnd(GameId)
+	}()
 
 	CtrlWindows := App.NewWindow("控制界面 点击两次 ╳ 退出")
 	CtrlWindows.SetIcon(svgResource)

@@ -4,7 +4,10 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"fmt"
+	"github.com/vtb-link/bianka/live"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -12,8 +15,6 @@ import (
 	"regexp"
 	"runtime"
 	"time"
-
-	"fyne.io/fyne/v2/widget"
 
 	"github.com/vtb-link/bianka/proto"
 
@@ -178,12 +179,7 @@ func assistUI() *fyne.Container {
 	AliPay.FillMode = canvas.ImageFillOriginal
 	AliPayRed := canvas.NewImageFromReader(bytes.NewReader(AliPayRedPack), "AliPayRedPack.jpg")
 	AliPayRed.FillMode = canvas.ImageFillOriginal
-
-	BuyCard := widget.NewButton("买张流量卡", func() {
-		OpenUrl("https://91haoka.cn/gth/#/minishop?share_id=559873")
-	})
-
-	Cont := container.NewHBox(Wx, AliPay, AliPayRed, BuyCard)
+	Cont := container.NewHBox(Wx, AliPay, AliPayRed)
 	return Cont
 }
 
@@ -220,4 +216,32 @@ func OpenUrl(url string) error {
 	}
 	args = append(args, url)
 	return exec.Command(cmd, args...).Start()
+}
+
+func Restart() {
+	exePath, err := os.Executable()
+	if err != nil {
+		fmt.Println("无法获取可执行文件路径:", err)
+		return
+	}
+	// 启动新进程来替换当前进程
+	cmd := exec.Command(exePath)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
+}
+
+func NewHeartbeat(client *live.Client, GameId string, CloseChan chan bool) {
+	tk := time.NewTicker(time.Second * 10)
+	go func() {
+		select {
+		case <-tk.C:
+			if err := client.AppHeartbeat(GameId); err != nil {
+				log.Println("Heartbeat fail", err)
+			}
+		case <-CloseChan:
+			tk.Stop()
+			break
+		}
+	}()
 }
