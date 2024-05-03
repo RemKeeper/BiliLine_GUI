@@ -5,18 +5,17 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"image/color"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/atotto/clipboard"
+	"image/color"
+	"io"
+	"log"
+	"net/http"
+	"strconv"
 )
 
 //go:embed Resource/404.jpg
@@ -87,6 +86,10 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			return
 		}
 	})
+
+	ReconnectButton := widget.NewButton("重连弹幕服务器", func() {
+		Restart()
+	})
 	if !globalConfiguration.EnableMusicServer {
 		CopyMusicUrlButton.Hide()
 	}
@@ -116,9 +119,9 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			canvas.NewText(difference.String(), color.White),
 		)
 
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, ReconnectButton, assist)
 	} else {
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, ReconnectButton, assist)
 	}
 }
 

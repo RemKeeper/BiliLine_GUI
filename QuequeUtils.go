@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/vtb-link/bianka/proto"
@@ -24,10 +25,17 @@ func ResponseQueCtrl() {
 
 		SendDmToWs(DmParsed)
 
+		fmt.Println("弹幕:", DmParsed.Msg)
+
 		// 用户发送取消排队指令响应
 		if DmParsed.Msg == "取消排队" {
 			// DeleteLine(strconv.Itoa(DmParsed.Uid))
 			DeleteLine(DmParsed.OpenID)
+		}
+
+		// 用户发送寻址指令响应
+		if DmParsed.Msg == "我在哪" {
+			SendWhereToWs(DmParsed.OpenID)
 		}
 
 		// 用户发送关键词响应

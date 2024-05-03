@@ -144,11 +144,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		} else {
 			globalConfiguration = SaveConfig
 			SetConfig(SaveConfig)
-			if !IsFirstStart {
-				CloseConn <- true
-			}
-			// dialog.ShowInformation("保存成功", "配置已保存,请重启", Windows)
-			go RoomConnect(globalConfiguration.IdCode)
+			dialog.ShowInformation("保存成功", "配置已保存,如果涉及身份码修改,请重启", Windows)
 			time.Sleep(1 * time.Second)
 			Windows.SetContent(MakeMainUI(Windows, SaveConfig))
 

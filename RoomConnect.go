@@ -1,18 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"github.com/vtb-link/bianka/basic"
 	"log"
 	"regexp"
-	"time"
-
-	"github.com/vtb-link/bianka/basic"
 
 	"github.com/vtb-link/bianka/live"
 	"github.com/vtb-link/bianka/proto"
 )
-
-var LiveUserId int
 
 func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 	line.GuardIndex = make(map[string]int)
@@ -72,76 +67,45 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 	return nil
 }
 
-func RoomConnect(IdCode string) {
-	sdkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
-	// 创建sdk实例
-	sdk := live.NewClient(sdkConfig)
-	// app start
-	startResp, err := sdk.AppStart(IdCode)
+func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient *basic.WsClient, HeartbeatCloseChan chan bool) {
+	//	初始化应用连接信息配置，自编译请申明以下3个值
+	LinkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
+	//	创建Api连接实例
+	client := live.NewClient(LinkConfig)
+	//	开始身份码认证流程
+
+	AppStart, err := client.AppStart(IdCode)
+	RoomId = AppStart.AnchorInfo.RoomID
 	if err != nil {
-		panic(err)
+		log.Println("应用流程开启失败", err)
+		return nil, "", nil, nil
 	}
-
-	fmt.Println("当前连接用户为", startResp.AnchorInfo)
-
-	// 启用项目心跳 20s一次
-	// see https://open-live.bilibili.com/document/eba8e2e1-847d-e908-2e5c-7a1ec7d9266f
-	tk := time.NewTicker(time.Second * 20)
-	go func(GameID string) {
-		for {
-			select {
-			case <-tk.C:
-				// 心跳
-				if err := sdk.AppHeartbeat(GameID); err != nil {
-					log.Println("Heartbeat fail", err)
-				}
-			}
-		}
-	}(startResp.GameInfo.GameID)
-	RoomId = startResp.AnchorInfo.RoomID
-	// app end
-	defer func() {
-		tk.Stop()
-		sdk.AppEnd(startResp.GameInfo.GameID)
-	}()
+	//开启心跳
+	HeartbeatCloseChan = make(chan bool, 1)
+	NewHeartbeat(client, AppStart.GameInfo.GameID, HeartbeatCloseChan)
 
 	dispatcherHandleMap := basic.DispatcherHandleMap{
 		proto.OperationMessage: messageHandle,
 	}
-
-	// 关闭回调事件
-	// 此事件会在websocket连接关闭后触发
-	// 时序如下：
-	// 0. send close message // 主动发送关闭消息
-	// 1. close eventLoop // 不再处理任何消息
-	// 2. close websocket // 关闭websocket连接
-	// 3. onCloseCallback // 触发关闭回调事件
-	// 增加了closeType 参数, 用于区分关闭类型
 	onCloseCallback := func(wcs *basic.WsClient, startResp basic.StartResp, closeType int) {
-		// 注册关闭回调
 		log.Println("WebsocketClient onClose", startResp)
-
 		// 注意检查关闭类型, 避免无限重连
 		if closeType == live.CloseActively || closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
 			log.Println("WebsocketClient exit")
 			return
 		}
-
 		err := wcs.Reconnection(startResp)
 		if err != nil {
 			log.Println("Reconnection fail", err)
 		}
 	}
-
-	wsClient, err := basic.StartWebsocket(startResp, dispatcherHandleMap, onCloseCallback, basic.DefaultLoggerGenerator())
+	// 一键开启websocket
+	wsClient, err := basic.StartWebsocket(AppStart, dispatcherHandleMap, onCloseCallback, logger)
 	if err != nil {
 		panic(err)
 	}
+	return client, AppStart.GameInfo.GameID, wsClient, HeartbeatCloseChan
 
-	defer wsClient.Close()
-	<-CloseConn
-	log.Println("监听到退出信号")
-	// 监听退出信号
 }
 
 var KeyWordMatchMap = make(map[string]bool)

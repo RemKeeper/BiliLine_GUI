@@ -16,6 +16,8 @@ const (
 	OpDelete = 0
 	// OpAdd 添加操作标识码
 	OpAdd = 1
+	// OpWhere 寻址操作标识码
+	OpWhere = 2
 )
 
 // RoomInfo 直播间信息
