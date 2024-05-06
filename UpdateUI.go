@@ -29,7 +29,7 @@ func MakeUpdateUI(NewVersion VersionSct) *fyne.Container {
 		changelogTitle,
 		container.NewVBox(changelogItems...),
 		widget.NewButton("下载更新", func() {
-			err := OpenUrl(NewVersion.UpdateUrl)
+			err := AgreeOpenUrl(NewVersion.UpdateUrl)
 			if err != nil {
 				return
 			}
