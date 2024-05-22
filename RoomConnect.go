@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
 	"regexp"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/vtb-link/bianka/basic"
 
@@ -62,7 +63,7 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 			SetLine(line)
 		}
 	case live.CmdLiveOpenPlatformGuard:
-		log.Println(cmd, data.(*proto.CmdGuardData))
+		slog.Info(cmd, data.(*proto.CmdGuardData))
 	}
 
 	return nil
@@ -78,7 +79,7 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 	AppStart, err := client.AppStart(IdCode)
 	RoomId = AppStart.AnchorInfo.RoomID
 	if err != nil {
-		log.Println("应用流程开启失败", err)
+		slog.Error("应用流程开启失败", err)
 		return nil, "", nil, nil
 	}
 	// 开启心跳
@@ -89,15 +90,15 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 		proto.OperationMessage: messageHandle,
 	}
 	onCloseCallback := func(wcs *basic.WsClient, startResp basic.StartResp, closeType int) {
-		log.Println("WebsocketClient onClose", startResp)
+		slog.Info("WebsocketClient onClose", startResp)
 		// 注意检查关闭类型, 避免无限重连
 		if closeType == live.CloseActively || closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
-			log.Println("WebsocketClient exit")
+			slog.Info("WebsocketClient exit")
 			return
 		}
 		err := wcs.Reconnection(startResp)
 		if err != nil {
-			log.Println("Reconnection fail", err)
+			slog.Error("Reconnection fail", err)
 		}
 	}
 	// 一键开启websocket

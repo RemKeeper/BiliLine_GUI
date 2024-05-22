@@ -5,17 +5,18 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"image/color"
+	"io"
+	"net/http"
+	"strconv"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/atotto/clipboard"
-	"image/color"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
+	"golang.org/x/exp/slog"
 )
 
 //go:embed Resource/404.jpg
@@ -52,7 +53,7 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	var CoverDisplay io.Reader = bytes.NewReader(Pic404)
 	get, err := http.Get(RoomInformationObtained.Data.UserCover)
 	if err != nil {
-		log.Println("获取直播封面错误")
+		slog.Error("获取直播封面错误", err)
 	} else {
 		defer get.Body.Close()
 		CoverDisplay = get.Body

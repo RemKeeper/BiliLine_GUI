@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"regexp"
 	"runtime"
 	"time"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/vtb-link/bianka/live"
 
@@ -242,7 +243,7 @@ func NewHeartbeat(client *live.Client, GameId string, CloseChan chan bool) {
 			select {
 			case <-tk.C:
 				if err := client.AppHeartbeat(GameId); err != nil {
-					log.Println("Heartbeat fail", err)
+					slog.Error("Heartbeat fail", err)
 				}
 			case <-CloseChan:
 				tk.Stop()

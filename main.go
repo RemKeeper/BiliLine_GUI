@@ -3,11 +3,11 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"os"
+
 	"github.com/vtb-link/bianka/basic"
 	"github.com/vtb-link/bianka/live"
 	"golang.org/x/exp/slog"
-	"log"
-	"os"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -29,10 +29,23 @@ var logger *slog.Logger
 var Broadcast = NewBroadcaster()
 
 func main() {
-	file, err := os.Create("log.txt")
+	fileInfo, err := os.Stat("log.txt")
 	if err != nil {
-		log.Fatal(err)
+		return
 	}
+	var file *os.File
+	if fileInfo == nil {
+		file, err = os.Create("log.txt")
+		if err != nil {
+			slog.Error("", err)
+		}
+	} else {
+		file, err = os.Open("log.txt")
+		if err != nil {
+			return
+		}
+	}
+
 	defer file.Close()
 
 	logger = slog.New(slog.NewTextHandler(file, nil))
@@ -43,7 +56,6 @@ func main() {
 	// CleanOldVersion()
 
 	svgResource := fyne.NewStaticResource("icon.svg", icon)
-	log.SetFlags(log.Ldate | log.Llongfile)
 	// 资源初始化区域
 	App := app.New()
 	App.Settings().SetTheme(theme.DarkTheme())
@@ -68,7 +80,7 @@ func main() {
 	var CloseHeartbeatChan chan bool
 	var WsClient *basic.WsClient
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error("Get config Err", err)
 		MainWindows.SetContent(MakeConfigUI(MainWindows, RunConfig{}))
 	} else {
 		go func() {
@@ -85,7 +97,7 @@ func main() {
 
 	defer func() {
 		fmt.Println("触发关闭函数")
-		//CloseConn <- true
+		// CloseConn <- true
 		CloseHeartbeatChan <- true
 		WsClient.Close()
 		AppClient.AppEnd(GameId)

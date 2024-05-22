@@ -4,12 +4,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"io/fs"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"golang.org/x/exp/slog"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/websocket"
@@ -39,7 +40,6 @@ var (
 )
 
 func StartWebServer() {
-
 	_, _ = http.Get("http://127.0.0.1:100/EXIT")
 
 	handler := handlers.CORS(
@@ -48,7 +48,7 @@ func StartWebServer() {
 	)(WebServer())
 	err := http.ListenAndServe(":100", handler)
 	if err != nil {
-		log.Println(err.Error())
+		slog.Error(err.Error())
 		return
 	}
 }
@@ -59,7 +59,7 @@ func WebServer() *http.ServeMux {
 	mux.HandleFunc("/LineWs", func(writer http.ResponseWriter, request *http.Request) {
 		conn, err := upgrader.Upgrade(writer, request, nil)
 		if err != nil {
-			log.Println(err.Error())
+			slog.Error(err.Error())
 			return
 		}
 
@@ -74,7 +74,7 @@ func WebServer() *http.ServeMux {
 		defer func(conn *websocket.Conn) {
 			err := conn.Close()
 			if err != nil {
-				log.Println("Failed to close connection:", err)
+				slog.Error("Failed to close connection:", err)
 				return
 			}
 		}(conn)
@@ -102,7 +102,7 @@ func WebServer() *http.ServeMux {
 			for w := range ConnMapCopy {
 				err = w.WriteMessage(websocket.TextMessage, Chat)
 				if err != nil {
-					log.Println("Failed to write message:", err)
+					slog.Error("Failed to write message:", err)
 					delete(QueueConnMap, w)
 				}
 			}
@@ -113,14 +113,14 @@ func WebServer() *http.ServeMux {
 	mux.HandleFunc("/DmWs", func(writer http.ResponseWriter, request *http.Request) {
 		conn, err := upgrader.Upgrade(writer, request, nil)
 		if err != nil {
-			log.Println("Websocket Upgrade Err:" + err.Error())
+			slog.Error("Websocket Upgrade Err:", err.Error())
 			return
 		}
 		DmConnMap[conn] = true
 
 		err = conn.WriteMessage(websocket.TextMessage, []byte("Connected"))
 		if err != nil {
-			log.Println("Websocket Write Err:" + err.Error())
+			slog.Error("Websocket Write Err:", err.Error())
 			delete(DmConnMap, conn)
 			return
 		}
@@ -128,7 +128,7 @@ func WebServer() *http.ServeMux {
 		defer func(conn *websocket.Conn) {
 			err := conn.Close()
 			if err != nil {
-				log.Println("Failed to close connection:", err)
+				slog.Error("Failed to close connection:", err)
 				return
 			}
 		}(conn)
@@ -156,7 +156,7 @@ func WebServer() *http.ServeMux {
 			for w := range ConnMapCopy {
 				err = w.WriteMessage(websocket.TextMessage, Chat)
 				if err != nil {
-					log.Println("Failed to write message:", err)
+					slog.Error("Failed to write message:", err)
 					delete(DmConnMap, w)
 				}
 			}
@@ -199,7 +199,7 @@ func WebServer() *http.ServeMux {
 			return nil
 		})
 		if err != nil {
-			log.Println(err)
+			slog.Error("Find font err", err)
 			return
 		}
 	})
