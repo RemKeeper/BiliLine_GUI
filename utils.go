@@ -5,8 +5,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/vtb-link/bianka/live"
-	"io"
 	"log"
 	"math/rand"
 	"net/http"
@@ -15,6 +13,8 @@ import (
 	"regexp"
 	"runtime"
 	"time"
+
+	"github.com/vtb-link/bianka/live"
 
 	"github.com/vtb-link/bianka/proto"
 
@@ -92,14 +92,14 @@ func SendDmToWs(Dm *proto.CmdDanmuData) {
 }
 
 func SendMusicServer(Path, Keyword string) {
-	get, err := http.Get("http://127.0.0.1:99/" + Path + "?keyword=" + Keyword)
-	if err != nil {
-		return
-	}
-	resp, _ := io.ReadAll(get.Body)
-	if get.StatusCode != 200 || string(resp) != "播放成功" {
-		// Todo 错误处理
-		return
+	for i := 0; i < 3; i++ {
+		get, err := http.Get("http://127.0.0.1:99/" + Path + "?keyword=" + Keyword)
+		if err != nil {
+			return
+		}
+		if get.StatusCode == 200 {
+			break
+		}
 	}
 }
 
@@ -199,8 +199,7 @@ func CleanOldVersion() {
 	}
 }
 
-//尝试函数名过检测使用的抽象函数名，实际作用只是调用命令行打开链接
-
+// 尝试函数名过检测使用的抽象函数名，实际作用只是调用命令行打开链接
 func AgreeOpenUrl(url string) error {
 	var (
 		cmd  string
@@ -250,6 +249,5 @@ func NewHeartbeat(client *live.Client, GameId string, CloseChan chan bool) {
 				break
 			}
 		}
-
 	}()
 }

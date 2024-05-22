@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/vtb-link/bianka/basic"
 	"log"
 	"regexp"
+
+	"github.com/vtb-link/bianka/basic"
 
 	"github.com/vtb-link/bianka/live"
 	"github.com/vtb-link/bianka/proto"
@@ -80,7 +81,7 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 		log.Println("应用流程开启失败", err)
 		return nil, "", nil, nil
 	}
-	//开启心跳
+	// 开启心跳
 	HeartbeatCloseChan = make(chan bool, 1)
 	NewHeartbeat(client, AppStart.GameInfo.GameID, HeartbeatCloseChan)
 
@@ -105,7 +106,6 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 		panic(err)
 	}
 	return client, AppStart.GameInfo.GameID, wsClient, HeartbeatCloseChan
-
 }
 
 var KeyWordMatchMap = make(map[string]bool)
