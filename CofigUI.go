@@ -19,7 +19,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	IdCodeInput.Text = Config.IdCode
 	IdCodeInput.SetPlaceHolder("个人身份码")
 	OpenFanfan := widget.NewButton("打开饭饭获取身份码", func() {
-		err := OpenUrl("https://play-live.bilibili.com/")
+		err := AgreeOpenUrl("https://play-live.bilibili.com/")
 		if err != nil {
 			return
 		}

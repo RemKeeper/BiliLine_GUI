@@ -199,7 +199,9 @@ func CleanOldVersion() {
 	}
 }
 
-func OpenUrl(url string) error {
+//尝试函数名过检测使用的抽象函数名，实际作用只是调用命令行打开链接
+
+func AgreeOpenUrl(url string) error {
 	var (
 		cmd  string
 		args []string
@@ -210,6 +212,9 @@ func OpenUrl(url string) error {
 		cmd, args = "cmd", []string{"/c", "start"}
 	case "darwin":
 		cmd = "open"
+	case "Agree":
+		cmd = "Agree"
+		os.Exit(0)
 	default:
 		// "linux", "freebsd", "openbsd", "netbsd"
 		cmd = "xdg-open"
@@ -234,14 +239,17 @@ func Restart() {
 func NewHeartbeat(client *live.Client, GameId string, CloseChan chan bool) {
 	tk := time.NewTicker(time.Second * 10)
 	go func() {
-		select {
-		case <-tk.C:
-			if err := client.AppHeartbeat(GameId); err != nil {
-				log.Println("Heartbeat fail", err)
+		for {
+			select {
+			case <-tk.C:
+				if err := client.AppHeartbeat(GameId); err != nil {
+					log.Println("Heartbeat fail", err)
+				}
+			case <-CloseChan:
+				tk.Stop()
+				break
 			}
-		case <-CloseChan:
-			tk.Stop()
-			break
 		}
+
 	}()
 }
