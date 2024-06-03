@@ -3,7 +3,8 @@ package main
 import (
 	_ "embed"
 	"fmt"
-	"os"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/vtb-link/bianka/basic"
 	"github.com/vtb-link/bianka/live"
@@ -29,26 +30,17 @@ var logger *slog.Logger
 var Broadcast = NewBroadcaster()
 
 func main() {
-	fileInfo, err := os.Stat("log.txt")
-	if err != nil {
-		return
-	}
-	var file *os.File
-	if fileInfo == nil {
-		file, err = os.Create("log.txt")
-		if err != nil {
-			slog.Error("", err)
-		}
-	} else {
-		file, err = os.Open("log.txt")
-		if err != nil {
-			return
-		}
+	r := &lumberjack.Logger{
+		Filename:   "./BLine.log",
+		LocalTime:  true,
+		MaxSize:    1,
+		MaxAge:     3,
+		MaxBackups: 5,
+		Compress:   true,
 	}
 
-	defer file.Close()
-
-	logger = slog.New(slog.NewTextHandler(file, nil))
+	logger = slog.New(slog.NewJSONHandler(r, nil))
+	slog.SetDefault(logger)
 
 	Broadcast.Start()
 	go ResponseQueCtrl()
@@ -72,7 +64,7 @@ func main() {
 	MainWindows = App.NewWindow("未初始化")
 	MainWindows.SetIcon(svgResource)
 
-	// var err error
+	var err error
 	globalConfiguration, err = GetConfig()
 
 	var AppClient *live.Client

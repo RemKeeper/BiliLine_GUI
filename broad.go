@@ -1,24 +1,26 @@
 package main
 
+import "github.com/vtb-link/bianka/proto"
+
 type Broadcaster struct {
-	subscribers []chan interface{}
-	broadcast   chan interface{}
+	subscribers []chan *proto.CmdDanmuData
+	broadcast   chan *proto.CmdDanmuData
 }
 
 func NewBroadcaster() *Broadcaster {
 	return &Broadcaster{
-		subscribers: make([]chan interface{}, 0),
-		broadcast:   make(chan interface{}),
+		subscribers: make([]chan *proto.CmdDanmuData, 0),
+		broadcast:   make(chan *proto.CmdDanmuData),
 	}
 }
 
-func (b *Broadcaster) Subscribe(bufferSize int) chan interface{} {
-	ch := make(chan interface{}, bufferSize)
+func (b *Broadcaster) Subscribe(bufferSize int) chan *proto.CmdDanmuData {
+	ch := make(chan *proto.CmdDanmuData, bufferSize)
 	b.subscribers = append(b.subscribers, ch)
 	return ch
 }
 
-func (b *Broadcaster) Broadcast(value interface{}) {
+func (b *Broadcaster) Broadcast(value *proto.CmdDanmuData) {
 	b.broadcast <- value
 }
 

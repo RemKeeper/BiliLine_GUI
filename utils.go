@@ -244,6 +244,8 @@ func NewHeartbeat(client *live.Client, GameId string, CloseChan chan bool) {
 			case <-tk.C:
 				if err := client.AppHeartbeat(GameId); err != nil {
 					slog.Error("Heartbeat fail", err)
+				} else {
+					slog.Info("Heartbeat Success", GameId)
 				}
 			case <-CloseChan:
 				tk.Stop()

@@ -3,24 +3,18 @@ package main
 import (
 	"fmt"
 	"strings"
-
-	"github.com/vtb-link/bianka/proto"
 )
 
 func ResponseQueCtrl() {
 	QueSubscriber := Broadcast.Subscribe(20)
 
 	for {
-		DmRaw := <-QueSubscriber
-		DmParsed := DmRaw.(*proto.CmdDanmuData)
+		DmParsed := <-QueSubscriber
 
 		if globalConfiguration.EnableMusicServer {
 			if strings.HasPrefix(DmParsed.Msg, "点歌 ") {
 				SendMusicServer("search", DmParsed.Msg[7:])
 			}
-			//if strings.HasPrefix(DmParsed.Msg, "切歌") {
-			//	SendMusicServer("next", "")
-			//}
 		}
 
 		SendDmToWs(DmParsed)
