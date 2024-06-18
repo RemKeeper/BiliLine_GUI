@@ -4,6 +4,8 @@ import (
 	_ "embed"
 	"fmt"
 
+	"github.com/vtb-link/bianka/proto"
+
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/vtb-link/bianka/basic"
@@ -27,7 +29,7 @@ var (
 
 var logger *slog.Logger
 
-var Broadcast = NewBroadcaster()
+var DanmuDataChan = make(chan *proto.CmdDanmuData, 20)
 
 func main() {
 	r := &lumberjack.Logger{
@@ -42,7 +44,6 @@ func main() {
 	logger = slog.New(slog.NewJSONHandler(r, nil))
 	slog.SetDefault(logger)
 
-	Broadcast.Start()
 	go ResponseQueCtrl()
 
 	// CleanOldVersion()

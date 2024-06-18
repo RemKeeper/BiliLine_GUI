@@ -30,9 +30,10 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 		if globalConfiguration.IsOnlyGift {
 			break
 		}
-		DanmuData := data.(*proto.CmdDanmuData)
 
-		Broadcast.Broadcast(DanmuData)
+		DanmuData := data.(*proto.CmdDanmuData)
+		slog.Info(DanmuData.Uname, DanmuData.Msg)
+		DanmuDataChan <- DanmuData
 
 	case proto.CmdLiveOpenPlatformSendGift:
 		GiftData := data.(*proto.CmdSendGiftData)
@@ -92,7 +93,7 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 	onCloseCallback := func(wcs *basic.WsClient, startResp basic.StartResp, closeType int) {
 		slog.Info("WebsocketClient onClose", startResp)
 		// 注意检查关闭类型, 避免无限重连
-		if closeType == live.CloseActively || closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
+		if closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
 			slog.Info("WebsocketClient exit")
 			return
 		}

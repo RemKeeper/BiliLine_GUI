@@ -1,15 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 )
 
 func ResponseQueCtrl() {
-	QueSubscriber := Broadcast.Subscribe(20)
-
 	for {
-		DmParsed := <-QueSubscriber
+		DmParsed := <-DanmuDataChan
 
 		if globalConfiguration.EnableMusicServer {
 			if strings.HasPrefix(DmParsed.Msg, "点歌 ") {
@@ -18,8 +15,6 @@ func ResponseQueCtrl() {
 		}
 
 		SendDmToWs(DmParsed)
-
-		fmt.Println("弹幕:", DmParsed.Msg)
 
 		// 用户发送取消排队指令响应
 		if DmParsed.Msg == "取消排队" {

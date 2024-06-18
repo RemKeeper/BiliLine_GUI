@@ -9,8 +9,8 @@ import (
 const updateUrl = "https://lineupversion.rem.asia/"
 
 const (
-	NowVersion      = "1.3.3"
-	NowVersionCount = 39
+	NowVersion      = "1.4.0"
+	NowVersionCount = 40
 )
 
 func CheckVersion() (VersionSct, bool) {
