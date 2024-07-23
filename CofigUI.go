@@ -91,6 +91,16 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	EnableDmDisplayNoSleep := widget.NewCheck("弹幕页面显示不休眠(移动端实验性)", func(b bool) {})
 	EnableDmDisplayNoSleep.Checked = Config.DmDisplayNoSleep
 
+	AutoScrollLine := widget.NewCheck("队列自动滚动展示", func(b bool) {})
+	AutoScrollLine.Checked = Config.AutoScrollLine
+
+	//滚动间隔
+	ScrollIntervalInput := widget.NewEntry()
+	ScrollIntervalInput.SetPlaceHolder("滚动间隔(秒)")
+	if Config.ScrollInterval > 0 {
+		ScrollIntervalInput.Text = strconv.Itoa(Config.ScrollInterval / 2)
+	}
+
 	LineMaxLengthInput := widget.NewEntry()
 	LineMaxLengthInput.SetPlaceHolder("队列最大容量")
 	if Config.MaxLineCount > 0 {
@@ -100,6 +110,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	StartButton := widget.NewButton("保存配置并开始", func() {
 		GiftLinePriceFloat64, err := strconv.ParseFloat(GiftPriceInput.Text, 10)
 		LineMaxLengthInt, err := strconv.Atoi(LineMaxLengthInput.Text)
+		ScrollIntervalInt, err := strconv.Atoi(ScrollIntervalInput.Text)
 
 		switch {
 		case len(IdCodeInput.Text) == 0:
@@ -134,6 +145,8 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			CurrentQueueSizeDisplay: DisplayQueSize.Checked,
 			EnableMusicServer:       EnableMusicServer.Checked,
 			DmDisplayNoSleep:        EnableDmDisplayNoSleep.Checked,
+			ScrollInterval:          ScrollIntervalInt * 2,
+			AutoScrollLine:          AutoScrollLine.Checked,
 		}
 
 		KeyWordMatchMap = make(map[string]bool)
@@ -145,12 +158,31 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			globalConfiguration = SaveConfig
 			SetConfig(SaveConfig)
 			dialog.ShowInformation("保存成功", "配置已保存,如果涉及身份码修改,请重启", Windows)
+			Restart()
 			time.Sleep(1 * time.Second)
 			Windows.SetContent(MakeMainUI(Windows, SaveConfig))
 
 		}
 	})
-	return container.NewVBox(IdCodeInput, OpenFanfan, LineKeyInput, IsOnlyGiftSwitch, GiftPriceDisplaySwitch, TransparentBackgroundCheck, SelectLineColor, GiftJoinLine, GiftPriceInput, DisplayQueSize, EnableMusicServer, EnableDmDisplayNoSleep, LineMaxLengthInput, StartButton)
+	return container.NewVBox(
+		IdCodeInput,
+		OpenFanfan,
+		LineKeyInput,
+		IsOnlyGiftSwitch,
+		GiftPriceDisplaySwitch,
+		TransparentBackgroundCheck,
+		SelectLineColor,
+		GiftJoinLine,
+		GiftPriceInput,
+		DisplayQueSize,
+		EnableMusicServer,
+		EnableDmDisplayNoSleep,
+		LineMaxLengthInput,
+		AutoScrollLine,
+		ScrollIntervalInput,
+
+		StartButton,
+	)
 }
 
 func MakeSelectColor(text *canvas.Text) *fyne.Container {

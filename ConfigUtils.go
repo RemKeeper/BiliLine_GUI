@@ -54,7 +54,7 @@ func SetConfig(sConfig RunConfig) bool {
 func SetLine(lp LineRow) {
 	lineJson, _ := json.MarshalIndent(lp, "", " ")
 	lineConfigFile := "./line.json"
-	WriteErr := os.WriteFile(lineConfigFile, lineJson, 0o666)
+	WriteErr := os.WriteFile(lineConfigFile, lineJson, 0666)
 	if WriteErr != nil {
 		fmt.Println("队列文件更新失败")
 	}

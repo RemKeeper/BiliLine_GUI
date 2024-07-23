@@ -4,8 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/vtb-link/bianka/proto"
-
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/vtb-link/bianka/basic"
@@ -29,9 +27,19 @@ var (
 
 var logger *slog.Logger
 
-var DanmuDataChan = make(chan *proto.CmdDanmuData, 20)
+//var DanmuDataChan = make(chan *proto.CmdDanmuData, 20)
 
 func main() {
+
+	line.GuardIndex = make(map[string]int)
+	line.GiftIndex = make(map[string]int)
+	line.CommonIndex = make(map[string]int)
+
+	lineTemp, err := GetLine()
+	if err == nil && !lineTemp.IsEmpty() {
+		line = lineTemp
+	}
+
 	r := &lumberjack.Logger{
 		Filename:   "./BLine.log",
 		LocalTime:  true,
@@ -44,7 +52,7 @@ func main() {
 	logger = slog.New(slog.NewJSONHandler(r, nil))
 	slog.SetDefault(logger)
 
-	go ResponseQueCtrl()
+	//go ResponseQueCtrl()
 
 	// CleanOldVersion()
 
@@ -65,7 +73,7 @@ func main() {
 	MainWindows = App.NewWindow("未初始化")
 	MainWindows.SetIcon(svgResource)
 
-	var err error
+	//var err error
 	globalConfiguration, err = GetConfig()
 
 	var AppClient *live.Client
@@ -107,7 +115,14 @@ func main() {
 			CtrlWindows.Close()
 		}
 	})
+
+	CtrlWindows.RequestFocus()
+
 	CtrlWindows.Resize(fyne.NewSize(400, 600))
+	CtrlUIContext := MakeCtrlUI()
+	size := CtrlUIContext.Size()
+	// 打印窗口尺寸
+	fmt.Printf("Window width: %f, height: %f\n", size.Width, size.Height)
 	CtrlWindows.SetContent(MakeCtrlUI())
 	CtrlWindows.Show()
 

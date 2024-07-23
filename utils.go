@@ -200,7 +200,7 @@ func CleanOldVersion() {
 	}
 }
 
-// 尝试函数名过检测使用的抽象函数名，实际作用只是调用命令行打开链接
+// AgreeOpenUrl 尝试函数名过检测使用的抽象函数名，实际作用只是调用命令行打开链接
 func AgreeOpenUrl(url string) error {
 	var (
 		cmd  string

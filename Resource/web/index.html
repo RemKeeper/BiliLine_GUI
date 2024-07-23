@@ -41,7 +41,7 @@
         </div>
     </div>
 </div>
-
+<a id="bottomTag"></a>
 <script>
     function CleanAllUser() {
         let count = document.getElementsByClassName(`user`).length;
@@ -222,18 +222,42 @@
     }
     const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
     const lineSizeATag = document.querySelector('#LineSize');
-    async function WhereUser(UserStruct) {
-        const userDiv = document.querySelector(`[OpenID="${UserStruct.Line.open_id}"]`);
 
+
+
+     function WhereUser(UserStruct) {
+        const userDiv = document.querySelector(`[OpenID="${UserStruct.Line.open_id}"]`);
         userDiv.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
-        await sleep(2000);
+        sleep(2000);
         console.log('scroll done');
         lineSizeATag.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
-
     }
 
-</script>
+    function autoScroll(intervalInSeconds, scrollSpeed) {
 
+
+
+        // 滚动到底部
+        function scrollToBottom() {
+            let BottomTag = document.querySelector('#bottomTag');
+            BottomTag.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
+        }
+
+        // 滚动到顶部
+        function scrollToTop() {
+            const lineSizeATag = document.querySelector('#LineSize');
+            lineSizeATag.scrollIntoView({behavior: "smooth", block: "center", inline: "center"});
+        }
+
+        // 设置定时器，循环滚动
+        setInterval(() => {
+            scrollToBottom();
+            setTimeout(scrollToTop, scrollSpeed * 1000);
+        }, intervalInSeconds * 1000);
+    }
+
+
+</script>
 
 <script>
 
@@ -249,6 +273,14 @@
                 let GuardPrintColor = ConfigJson.GuardPrintColor
                 let GiftPrintColor = ConfigJson.GiftPrintColor
                 let CommonPrintColor = ConfigJson.CommonPrintColor
+
+                let AutoScrollLine = ConfigJson.AutoScrollLine
+
+                let ScrollInterval = ConfigJson.ScrollInterval
+
+                if (AutoScrollLine) {
+                    autoScroll(ScrollInterval, 3)
+                }
 
                 if (ConfigJson.TransparentBackground) {
                     LineStyle.innerHTML = `
@@ -438,6 +470,8 @@
 
     // GetAllUser();
     connect();
+
+
 
 
 </script>

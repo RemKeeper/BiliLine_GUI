@@ -12,14 +12,6 @@ import (
 )
 
 func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
-	line.GuardIndex = make(map[string]int)
-	line.GiftIndex = make(map[string]int)
-	line.CommonIndex = make(map[string]int)
-
-	lineTemp, err := GetLine()
-	if err == nil && !lineTemp.IsEmpty() {
-		line = lineTemp
-	}
 	cmd, data, err := proto.AutomaticParsingMessageCommand(msg.Payload())
 	if err != nil {
 		return err
@@ -33,7 +25,7 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 
 		DanmuData := data.(*proto.CmdDanmuData)
 		slog.Info(DanmuData.Uname, DanmuData.Msg)
-		DanmuDataChan <- DanmuData
+		ResponseQueCtrl(DanmuData)
 
 	case proto.CmdLiveOpenPlatformSendGift:
 		GiftData := data.(*proto.CmdSendGiftData)
@@ -49,9 +41,11 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 			break
 		}
 
+		FindAndModifyDiscountGift(GiftData)
+
 		lineTemp := GiftLine{
 			OpenID: GiftData.OpenID,
-			// OpenID:     strconv.Itoa(GiftData.Uid),
+			// OpenID:     strconv.Itoa(DiscountGiftData.Uid),
 			UserName:   GiftData.Uname,
 			Avatar:     GiftData.Uface,
 			PrintColor: globalConfiguration.GiftPrintColor,

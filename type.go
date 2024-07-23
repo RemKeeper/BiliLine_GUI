@@ -165,6 +165,10 @@ type RunConfig struct {
 	MaxLineCount            int
 	EnableMusicServer       bool
 	DmDisplayNoSleep        bool
+	//滚动间隔
+	ScrollInterval int
+	//自动滚动队列
+	AutoScrollLine bool
 }
 
 type LineColor struct {

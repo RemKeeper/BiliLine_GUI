@@ -35,6 +35,9 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	if RoomInformationObtained.Code != 0 {
 		dialog.ShowError(DisplayError{Message: "房间号不存在，请检查是否输入正确"}, Windows)
 	}
+	// HACK:应付折扣礼物的临时功能函数
+	GetRoomGiftData(RoomInformationObtained.Data.RoomId)
+
 	TittleDisplay := container.NewHBox(
 		canvas.NewText("标题:", color.White),
 		canvas.NewText(RoomInformationObtained.Data.Title, color.White),

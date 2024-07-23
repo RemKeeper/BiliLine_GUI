@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"golang.org/x/exp/slog"
 
@@ -27,6 +28,12 @@ var DmDisplayHtml []byte
 
 //go:embed Resource/web/js/NoSleep.min.js
 var NoSleepJs []byte
+
+// 使用互斥锁保护共享资源
+var (
+	queueLock sync.Mutex
+	dmLock    sync.Mutex
+)
 
 var (
 	QueueChatChan = make(chan []byte, 50)
