@@ -65,7 +65,7 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 }
 
 func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient *basic.WsClient, HeartbeatCloseChan chan bool) {
-	//	初始化应用连接信息配置，自编译请申明以下3个值
+	//	初始化应用连接信息配置，自编译请申明以下3个值，需要自行注册开发者账号
 	LinkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
 	//	创建Api连接实例
 	client := live.NewClient(LinkConfig)
@@ -102,6 +102,10 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 		panic(err)
 	}
 	return client, AppStart.GameInfo.GameID, wsClient, HeartbeatCloseChan
+}
+
+func BlackRoomConnect(RoomId int64) {
+
 }
 
 var KeyWordMatchMap = make(map[string]bool)

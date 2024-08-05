@@ -29,6 +29,8 @@ var logger *slog.Logger
 
 //var DanmuDataChan = make(chan *proto.CmdDanmuData, 20)
 
+var LiveClientMap = make(map[*live.Client]int)
+
 func main() {
 
 	line.GuardIndex = make(map[string]int)

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"github.com/vtb-link/bianka/basic"
+	"github.com/vtb-link/bianka/live"
 	"image/color"
 )
 
@@ -203,4 +205,11 @@ type VersionSct struct {
 	UpdateDate   string   `json:"update_date"`
 	Changelog    []string `json:"changelog"`
 	UpdateUrl    string   `json:"update_url"`
+}
+
+type ClientConnect struct {
+	Client             *live.Client
+	GameId             string
+	WsClient           *basic.WsClient
+	HeartbeatCloseChan chan bool
 }

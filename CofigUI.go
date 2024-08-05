@@ -17,12 +17,9 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 
 	IdCodeInput := widget.NewEntry()
 	IdCodeInput.Text = Config.IdCode
-	IdCodeInput.SetPlaceHolder("个人身份码")
-	OpenFanfan := widget.NewButton("打开饭饭获取身份码", func() {
-		err := AgreeOpenUrl("https://play-live.bilibili.com/")
-		if err != nil {
-			return
-		}
+	IdCodeInput.SetPlaceHolder("房间号")
+	OpenFanfan := widget.NewButton("尝试登录", func() {
+		dialog.NewCustomConfirm("请使用bilibili客户端扫码登录", "Cookie保存于本地，本项目不保证数据安全", "取消登录", func() {}, Windows)
 	})
 
 	LineKeyInput := widget.NewEntry()

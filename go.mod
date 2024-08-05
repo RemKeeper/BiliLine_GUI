@@ -8,6 +8,7 @@ require (
 	github.com/flopp/go-findfont v0.1.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/websocket v1.5.3
+	github.com/tidwall/gjson v1.17.3
 	github.com/vtb-link/bianka v0.2.3-0.20240615235740-445b37dcf3ca
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8
 	golang.org/x/image v0.12.0
@@ -38,6 +39,8 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/tevino/abool v1.2.0 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/yuin/goldmark v1.5.6 // indirect
 	golang.org/x/mobile v0.0.0-20230901161150-52620a4a7557 // indirect
 	golang.org/x/net v0.25.0 // indirect
