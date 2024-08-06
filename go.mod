@@ -8,6 +8,7 @@ require (
 	github.com/flopp/go-findfont v0.1.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/websocket v1.5.3
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/tidwall/gjson v1.17.3
 	github.com/vtb-link/bianka v0.2.3-0.20240615235740-445b37dcf3ca
 	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8

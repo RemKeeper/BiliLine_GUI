@@ -100,10 +100,17 @@ func main() {
 
 	defer func() {
 		fmt.Println("触发关闭函数")
-		// CloseConn <- true
+
+		if WsClient != nil {
+			WsClient.Close()
+		}
+
+		if AppClient != nil {
+			AppClient.AppEnd(GameId)
+		} else {
+			return
+		}
 		CloseHeartbeatChan <- true
-		WsClient.Close()
-		AppClient.AppEnd(GameId)
 	}()
 
 	CtrlWindows := App.NewWindow("控制界面 点击两次 ╳ 退出")

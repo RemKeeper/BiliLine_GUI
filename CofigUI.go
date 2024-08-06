@@ -1,6 +1,9 @@
 package main
 
 import (
+	"BiliLine_Windows/BiliUtils"
+	"bytes"
+	"github.com/skip2/go-qrcode"
 	"image/color"
 	"strconv"
 	"time"
@@ -19,7 +22,26 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	IdCodeInput.Text = Config.IdCode
 	IdCodeInput.SetPlaceHolder("房间号")
 	OpenFanfan := widget.NewButton("尝试登录", func() {
-		dialog.NewCustomConfirm("请使用bilibili客户端扫码登录", "Cookie保存于本地，本项目不保证数据安全", "取消登录", func() {}, Windows)
+		key, qrUrl := BiliUtils.GetLoginKeyAndLoginUrl()
+		if key == "" || qrUrl == "" {
+			dialog.ShowError(DisplayError{Message: "获取登录信息错误"}, Windows)
+			return
+		}
+
+		dialog.NewCustomConfirm("请使用bilibili客户端扫码登录", "Cookie保存于本地，本项目不保证数据安全", "取消登录", MakeQrcodeCanvas(qrUrl), func(bool2 bool) {
+			if bool2 {
+				state, data, err := BiliUtils.GetQRCodeState(key)
+				if err != nil {
+					dialog.ShowError(DisplayError{Message: "获取登录状态错误"}, Windows)
+					return
+				}
+				if state {
+					dialog.ShowInformation("登录成功", "登录成功,用户名:"+data.Get("data.uname").String(), Windows)
+				} else {
+					dialog.ShowError(DisplayError{Message: "登录失败"}, Windows)
+				}
+			}
+		}, Windows).Show()
 	})
 
 	LineKeyInput := widget.NewEntry()
@@ -125,7 +147,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		if LineKeyInput.Text == "" {
 			LineKeyInput.Text = "排队"
 		}
-
+		RoomId, _ = strconv.Atoi(IdCodeInput.Text)
 		SaveConfig := RunConfig{
 			IdCode:                  IdCodeInput.Text,
 			GuardPrintColor:         ToLineColor(Guard.Color),
@@ -245,4 +267,15 @@ func MakeColorPicker(text *canvas.Text) {
 	}, MainWindows)
 	ColorPicker.Advanced = true
 	ColorPicker.Show()
+}
+
+func MakeQrcodeCanvas(QRCodeUrl string) *fyne.Container {
+	encode, err := qrcode.Encode(QRCodeUrl, qrcode.Medium, 256)
+	if err != nil {
+		return nil
+	}
+
+	QrCodeImage := canvas.NewImageFromReader(bytes.NewReader(encode), "二维码")
+	QrCodeImage.FillMode = canvas.ImageFillOriginal
+	return container.NewCenter(QrCodeImage)
 }
