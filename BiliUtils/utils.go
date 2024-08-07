@@ -70,7 +70,7 @@ func GetQRCodeState(loginKey string) (IsLogin bool, LoginData gjson.Result, err 
 			cookieContent = cookieContent + cookie + ";"
 		}
 		cookieContent = strings.TrimSuffix(cookieContent, ";")
-		login, result, csrf := verifyLogin(cookieContent)
+		login, result, csrf := VerifyLogin(cookieContent)
 
 		if login {
 			configInfo := BiliCookieConfig{
@@ -101,7 +101,7 @@ func GetQRCodeState(loginKey string) (IsLogin bool, LoginData gjson.Result, err 
 }
 
 // 验证 cookie 可用性
-func verifyLogin(cookie string) (bool, gjson.Result, string) {
+func VerifyLogin(cookie string) (bool, gjson.Result, string) {
 	u := "https://api.bilibili.com/x/web-interface/nav"
 	client := http.Client{}
 	req, _ := http.NewRequest("GET", u, nil)

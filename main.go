@@ -1,8 +1,10 @@
 package main
 
 import (
+	"BiliLine_Windows/BiliUtils"
 	_ "embed"
 	"fmt"
+	"fyne.io/fyne/v2/theme"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
@@ -12,7 +14,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/theme"
 )
 
 //go:embed Resource/bilibili-line.svg
@@ -23,13 +24,10 @@ var (
 	MainWindows         fyne.Window
 	line                LineRow
 	globalConfiguration RunConfig
+	BiliCookieConfig    BiliUtils.BiliCookieConfig
 )
 
 var logger *slog.Logger
-
-//var DanmuDataChan = make(chan *proto.CmdDanmuData, 20)
-
-var LiveClientMap = make(map[*live.Client]int)
 
 func main() {
 
@@ -77,6 +75,12 @@ func main() {
 
 	//var err error
 	globalConfiguration, err = GetConfig()
+
+	BiliCookieConfig, _ = GetBiliCookie()
+	login, _, _ := BiliUtils.VerifyLogin(BiliCookieConfig.Cookie)
+	if !login {
+		err = fmt.Errorf("cookie失效")
+	}
 
 	var AppClient *live.Client
 	var GameId string

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"BiliLine_Windows/BiliUtils"
 	"encoding/json"
 	"fmt"
 	"image/color"
@@ -18,6 +19,19 @@ func GetConfig() (rConfig RunConfig, err error) {
 		return RunConfig{}, err
 	}
 	return Config, err
+}
+
+func GetBiliCookie() (BiliUtils.BiliCookieConfig, error) {
+	file, err := os.ReadFile(BiliUtils.CookiePath)
+	if err != nil {
+		return BiliUtils.BiliCookieConfig{}, err
+	}
+	var CookieConfig BiliUtils.BiliCookieConfig
+	err = json.Unmarshal(file, &CookieConfig)
+	if err != nil {
+		return BiliUtils.BiliCookieConfig{}, err
+	}
+	return CookieConfig, err
 }
 
 func SetConfig(sConfig RunConfig) bool {

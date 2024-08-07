@@ -3,8 +3,10 @@ package main
 import (
 	"BiliLine_Windows/BiliUtils"
 	"bytes"
+	"errors"
 	"github.com/skip2/go-qrcode"
 	"image/color"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -21,14 +23,21 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	IdCodeInput := widget.NewEntry()
 	IdCodeInput.Text = Config.IdCode
 	IdCodeInput.SetPlaceHolder("房间号")
-	OpenFanfan := widget.NewButton("尝试登录", func() {
+	LoginButtonString := "尝试登录"
+	login, data, _ := BiliUtils.VerifyLogin(BiliCookieConfig.Cookie)
+	if login {
+		LoginButtonString = "已登录,用户名:" + data.Get("data.uname").String()
+	}
+
+	LoginBiliAccount := widget.NewButton(LoginButtonString, func() {})
+	LoginBiliAccount = widget.NewButton(LoginButtonString, func() {
+
 		key, qrUrl := BiliUtils.GetLoginKeyAndLoginUrl()
 		if key == "" || qrUrl == "" {
 			dialog.ShowError(DisplayError{Message: "获取登录信息错误"}, Windows)
 			return
 		}
-
-		dialog.NewCustomConfirm("请使用bilibili客户端扫码登录", "Cookie保存于本地，本项目不保证数据安全", "取消登录", MakeQrcodeCanvas(qrUrl), func(bool2 bool) {
+		dialog.NewCustomConfirm("请使用bilibili客户端扫码登录", "确认登录", "取消登录", MakeQrcodeCanvas(qrUrl), func(bool2 bool) {
 			if bool2 {
 				state, data, err := BiliUtils.GetQRCodeState(key)
 				if err != nil {
@@ -37,11 +46,14 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 				}
 				if state {
 					dialog.ShowInformation("登录成功", "登录成功,用户名:"+data.Get("data.uname").String(), Windows)
+					LoginBiliAccount.SetText("已登录,用户名:" + data.Get("data.uname").String())
+					LoginBiliAccount.Refresh()
 				} else {
 					dialog.ShowError(DisplayError{Message: "登录失败"}, Windows)
 				}
 			}
 		}, Windows).Show()
+		dialog.ShowError(errors.New("cookie明文将保存于本地，本项目不对数据安全以及账户安全负责！！"), Windows)
 	})
 
 	LineKeyInput := widget.NewEntry()
@@ -62,6 +74,38 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		GiftJoinLine.SetChecked(status)
 	})
 	IsOnlyGiftSwitch.Checked = Config.IsOnlyGift
+
+	IsOnlyFansSwitch := widget.NewCheck("是否开启   <!->仅限<-!>   佩戴粉丝牌排队", func(status bool) {})
+	IsOnlyFansSwitch.Checked = Config.IsOnlyFans
+
+	JoinLineFansMedalLevelInput := widget.NewEntry()
+	JoinLineFansMedalLevelInput.SetPlaceHolder("粉丝牌等级限制 0为不限制")
+	if Config.JoinLineFansMedalLevel > 0 {
+		JoinLineFansMedalLevelInput.Text = strconv.Itoa(Config.JoinLineFansMedalLevel)
+	} else {
+		JoinLineFansMedalLevelInput.Text = "0"
+	}
+	JoinLineFansMedalLevelInput.Validator = func(s string) error {
+		if JoinLineFansMedalLevelInput.Text == "" {
+			return nil
+		}
+
+		match, _ := regexp.MatchString(`^\d*$`, s)
+		if !match {
+			dialog.ShowError(DisplayError{Message: "请输入纯数字"}, Windows)
+		} else {
+			LevelNumber, err := strconv.Atoi(JoinLineFansMedalLevelInput.Text)
+			if err != nil {
+				dialog.ShowError(DisplayError{Message: "请输入纯数字"}, Windows)
+			}
+			if LevelNumber < 0 {
+				dialog.ShowError(DisplayError{Message: "请输入大于等于0的数字"}, Windows)
+			} else {
+				IsOnlyFansSwitch.SetChecked(true)
+			}
+		}
+		return nil
+	}
 
 	Guard := canvas.NewText("舰长", color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !Config.GuardPrintColor.IsEmpty() {
@@ -183,11 +227,13 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 
 		}
 	})
-	return container.NewVBox(
+	ConfigVbox := container.NewVBox(
 		IdCodeInput,
-		OpenFanfan,
+		LoginBiliAccount,
 		LineKeyInput,
 		IsOnlyGiftSwitch,
+		IsOnlyFansSwitch,
+		JoinLineFansMedalLevelInput,
 		GiftPriceDisplaySwitch,
 		TransparentBackgroundCheck,
 		SelectLineColor,
@@ -199,9 +245,13 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		LineMaxLengthInput,
 		AutoScrollLine,
 		ScrollIntervalInput,
-
 		StartButton,
 	)
+
+	ScrollBox := container.NewVScroll(ConfigVbox)
+	ScrollBox.SetMinSize(fyne.NewSize(400, 800))
+
+	return container.NewVBox(ScrollBox)
 }
 
 func MakeSelectColor(text *canvas.Text) *fyne.Container {

@@ -54,6 +54,16 @@ func ResponseQueCtrl(DmParsed *proto.CmdDanmuData) {
 		SendLineToWs(lineTemp, GiftLine{}, GuardLineType)
 		SetLine(line)
 	case len(line.CommonLine) <= globalConfiguration.MaxLineCount:
+		// 判断是否仅限粉丝牌佩戴用户
+		if globalConfiguration.IsOnlyFans {
+			if DmParsed.FansMedalWearingStatus == false {
+				return
+			}
+			// 判断是否指定粉丝牌等级
+			if globalConfiguration.JoinLineFansMedalLevel > 0 && DmParsed.FansMedalLevel < globalConfiguration.JoinLineFansMedalLevel {
+				return
+			}
+		}
 		lineTemp := Line{
 			// OpenID:     DmParsed.OpenID,
 			OpenID:     openID,
