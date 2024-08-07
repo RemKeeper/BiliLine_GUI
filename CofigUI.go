@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -19,7 +20,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	IdCodeInput.Text = Config.IdCode
 	IdCodeInput.SetPlaceHolder("房间号")
 	OpenFanfan := widget.NewButton("尝试登录", func() {
-		dialog.NewCustomConfirm("请使用bilibili客户端扫码登录", "Cookie保存于本地，本项目不保证数据安全", "取消登录", func() {}, Windows)
+		// dialog.NewCustomConfirm("请使用bilibili客户端扫码登录", "Cookie保存于本地，本项目不保证数据安全", "取消登录", func() {}, Windows)
 	})
 
 	LineKeyInput := widget.NewEntry()
@@ -40,6 +41,38 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		GiftJoinLine.SetChecked(status)
 	})
 	IsOnlyGiftSwitch.Checked = Config.IsOnlyGift
+
+	IsOnlyFansSwitch := widget.NewCheck("是否开启   <!->仅限<-!>   佩戴粉丝牌排队", func(status bool) {})
+	IsOnlyFansSwitch.Checked = Config.IsOnlyFans
+
+	JoinLineFansMedalLevelInput := widget.NewEntry()
+	JoinLineFansMedalLevelInput.SetPlaceHolder("粉丝牌等级限制 0为不限制")
+	if Config.JoinLineFansMedalLevel > 0 {
+		JoinLineFansMedalLevelInput.Text = strconv.Itoa(Config.JoinLineFansMedalLevel)
+	} else {
+		JoinLineFansMedalLevelInput.Text = "0"
+	}
+	JoinLineFansMedalLevelInput.Validator = func(s string) error {
+		if JoinLineFansMedalLevelInput.Text == "" {
+			return nil
+		}
+
+		match, _ := regexp.MatchString(`^\d*$`, s)
+		if !match {
+			dialog.ShowError(DisplayError{Message: "请输入纯数字"}, Windows)
+		} else {
+			LevelNumber, err := strconv.Atoi(JoinLineFansMedalLevelInput.Text)
+			if err != nil {
+				dialog.ShowError(DisplayError{Message: "请输入纯数字"}, Windows)
+			}
+			if LevelNumber < 0 {
+				dialog.ShowError(DisplayError{Message: "请输入大于等于0的数字"}, Windows)
+			} else {
+				IsOnlyFansSwitch.SetChecked(true)
+			}
+		}
+		return nil
+	}
 
 	Guard := canvas.NewText("舰长", color.RGBA{R: 255, G: 255, B: 255, A: 255})
 	if !Config.GuardPrintColor.IsEmpty() {
@@ -91,7 +124,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	AutoScrollLine := widget.NewCheck("队列自动滚动展示", func(b bool) {})
 	AutoScrollLine.Checked = Config.AutoScrollLine
 
-	//滚动间隔
+	// 滚动间隔
 	ScrollIntervalInput := widget.NewEntry()
 	ScrollIntervalInput.SetPlaceHolder("滚动间隔(秒)")
 	if Config.ScrollInterval > 0 {
@@ -108,6 +141,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		GiftLinePriceFloat64, err := strconv.ParseFloat(GiftPriceInput.Text, 10)
 		LineMaxLengthInt, err := strconv.Atoi(LineMaxLengthInput.Text)
 		ScrollIntervalInt, err := strconv.Atoi(ScrollIntervalInput.Text)
+		JoinLineFansMedalLevelInputInt, err := strconv.Atoi(JoinLineFansMedalLevelInput.Text)
 
 		switch {
 		case len(IdCodeInput.Text) == 0:
@@ -136,6 +170,8 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			DmDisplayColor:          ToLineColor(DmDisplayColor.Color),
 			LineKey:                 LineKeyInput.Text,
 			IsOnlyGift:              IsOnlyGiftSwitch.Checked,
+			IsOnlyFans:              IsOnlyFansSwitch.Checked,
+			JoinLineFansMedalLevel:  JoinLineFansMedalLevelInputInt,
 			AutoJoinGiftLine:        GiftJoinLine.Checked,
 			TransparentBackground:   TransparentBackgroundCheck.Checked,
 			MaxLineCount:            LineMaxLengthInt,
@@ -158,14 +194,16 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			Restart()
 			time.Sleep(1 * time.Second)
 			Windows.SetContent(MakeMainUI(Windows, SaveConfig))
-
 		}
 	})
-	return container.NewVBox(
+
+	ConfigVbox := container.NewVBox(
 		IdCodeInput,
 		OpenFanfan,
 		LineKeyInput,
 		IsOnlyGiftSwitch,
+		IsOnlyFansSwitch,
+		JoinLineFansMedalLevelInput,
 		GiftPriceDisplaySwitch,
 		TransparentBackgroundCheck,
 		SelectLineColor,
@@ -177,9 +215,13 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		LineMaxLengthInput,
 		AutoScrollLine,
 		ScrollIntervalInput,
-
 		StartButton,
 	)
+
+	ScrollBox := container.NewVScroll(ConfigVbox)
+	ScrollBox.SetMinSize(Windows.Canvas().Size())
+
+	return container.NewVBox(ScrollBox)
 }
 
 func MakeSelectColor(text *canvas.Text) *fyne.Container {

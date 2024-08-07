@@ -1,9 +1,10 @@
 package main
 
 import (
+	"image/color"
+
 	"github.com/vtb-link/bianka/basic"
 	"github.com/vtb-link/bianka/live"
-	"image/color"
 )
 
 const (
@@ -161,15 +162,17 @@ type RunConfig struct {
 	LineKey                 string
 	GiftPriceDisplay        bool
 	IsOnlyGift              bool
+	IsOnlyFans              bool
+	JoinLineFansMedalLevel  int
 	AutoJoinGiftLine        bool
 	TransparentBackground   bool
 	CurrentQueueSizeDisplay bool
 	MaxLineCount            int
 	EnableMusicServer       bool
 	DmDisplayNoSleep        bool
-	//滚动间隔
+	// 滚动间隔
 	ScrollInterval int
-	//自动滚动队列
+	// 自动滚动队列
 	AutoScrollLine bool
 }
 

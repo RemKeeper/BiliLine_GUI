@@ -2,6 +2,7 @@ package main
 
 const (
 	GetRoomDataUrl = "https://api.live.bilibili.com/xlive/web-room/v1/giftPanel/giftData?room_id=%d&platform=pc"
+	GiftJsonPath   = "./discountGift.json"
 )
 
 type GiftDataList struct {

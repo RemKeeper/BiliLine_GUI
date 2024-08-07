@@ -1,12 +1,22 @@
 package main
 
 import (
-	"github.com/vtb-link/bianka/proto"
 	"strings"
+
+	"github.com/vtb-link/bianka/proto"
 )
 
 func ResponseQueCtrl(DmParsed *proto.CmdDanmuData) {
-	//DmParsed := <-DanmuDataChan
+	// DmParsed := <-DanmuDataChan
+
+	if globalConfiguration.IsOnlyFans {
+		if DmParsed.FansMedalWearingStatus == false {
+			return
+		}
+		if globalConfiguration.JoinLineFansMedalLevel > 0 && DmParsed.FansMedalLevel < globalConfiguration.JoinLineFansMedalLevel {
+			return
+		}
+	}
 
 	if globalConfiguration.EnableMusicServer {
 		if strings.HasPrefix(DmParsed.Msg, "点歌 ") {
