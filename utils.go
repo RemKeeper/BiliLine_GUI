@@ -17,8 +17,6 @@ import (
 
 	"github.com/vtb-link/bianka/live"
 
-	"github.com/vtb-link/bianka/proto"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -84,7 +82,7 @@ func SendLineToWs(NormalLine Line, Gift GiftLine, LineType int) {
 	}
 }
 
-func SendDmToWs(Dm *proto.CmdDanmuData) {
+func SendDmToWs(Dm *DisplayDmMessage) {
 	SendDmWsJson, err := json.Marshal(Dm)
 	if err != nil {
 		return

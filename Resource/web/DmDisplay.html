@@ -83,6 +83,7 @@
             white-space: nowrap;
             vertical-align: top;
         }
+
         /*.Dm a {*/
 
         /*}*/
@@ -92,21 +93,21 @@
 <body>
 <script src="/NoSleep.min.js"></script>
 <div id="app">
-<!--    <div class="user">-->
-<!--        <div class="avatar">-->
-<!--            <img src="https://i2.hdslb.com/bfs/face/77c57a7b660b222460e738f639cdb600cb98ed4c.jpg">-->
-<!--        </div>-->
-<!--        <div class="userName">-->
-<!--            <a>普通用户</a>-->
-<!--            <a>:</a>-->
-<!--        </div>-->
-<!--                <div class="Dm">-->
-<!--                    <a>这是一条弹幕</a>-->
-<!--                </div>-->
-<!--        <div class="EmojiImg">-->
-<!--            <img src="http://i0.hdslb.com/bfs/emote/1e0cbe36d039b412f76fd72b3c86c0261a8aa521.png">-->
-<!--        </div>-->
-<!--    </div>-->
+    <!--    <div class="user">-->
+    <!--        <div class="avatar">-->
+    <!--            <img src="https://i2.hdslb.com/bfs/face/77c57a7b660b222460e738f639cdb600cb98ed4c.jpg">-->
+    <!--        </div>-->
+    <!--        <div class="userName">-->
+    <!--            <a>普通用户</a>-->
+    <!--            <a>:</a>-->
+    <!--        </div>-->
+    <!--                <div class="Dm">-->
+    <!--                    <a>这是一条弹幕</a>-->
+    <!--                </div>-->
+    <!--        <div class="EmojiImg">-->
+    <!--            <img src="http://i0.hdslb.com/bfs/emote/1e0cbe36d039b412f76fd72b3c86c0261a8aa521.png">-->
+    <!--        </div>-->
+    <!--    </div>-->
 </div>
 <script>
     let Host = window.location.host
@@ -177,7 +178,6 @@
         }
 
 
-
         // 将父容器添加到适当位置
         const container = document.getElementById("app");
         container.appendChild(userDiv);
@@ -201,15 +201,11 @@
 
         DmSocket.onmessage = (event) => {
             let ReceiverDmDate = JSON.parse(event.data)
-            if (!ReceiverDmDate.dm_type) {
-                console.log("收到一条弹幕")
-                addUserStructure(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.msg, ReceiverDmDate.dm_type)
-                console.log(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.msg, ReceiverDmDate.dm_type)
-            } else {
-                console.log("收到一个表情包")
-                addUserStructure(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.emoji_img_url, ReceiverDmDate.dm_type)
-                console.log(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.emoji_img_url, ReceiverDmDate.dm_type)
-            }
+
+            console.log("收到一条弹幕")
+            addUserStructure(ReceiverDmDate.UserInfo.data.card.face, ReceiverDmDate.Content.Sender.Uname, ReceiverDmDate.Content.Content, ReceiverDmDate.Content.Type)
+            console.log(ReceiverDmDate.UserInfo.data.card.face, ReceiverDmDate.Content.Sender.Uname, ReceiverDmDate.Content.Content, ReceiverDmDate.Content.Type)
+
 
         }
 
@@ -222,15 +218,15 @@
     connect()
     const noSleep = new NoSleep();
 
-    function GetConfig(){
+    function GetConfig() {
         const Http = new XMLHttpRequest();
         const Url = `http://${Host}/getConfig`;
-        Http.open("GET",Url)
+        Http.open("GET", Url)
         Http.send()
-        Http.onreadystatechange=function (){
-            if (this.readyState===4&&this.status===200){
+        Http.onreadystatechange = function () {
+            if (this.readyState === 4 && this.status === 200) {
                 let Config = JSON.parse(Http.responseText)
-                if (Config.DmDisplayNoSleep){
+                if (Config.DmDisplayNoSleep) {
                     noSleep.enable();
                 }
             }

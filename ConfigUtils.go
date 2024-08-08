@@ -8,8 +8,13 @@ import (
 	"os"
 )
 
+const (
+	ConfigPath     = "./lineConfig_black.json"
+	LineConfigPath = "./line_black.json"
+)
+
 func GetConfig() (rConfig RunConfig, err error) {
-	file, err := os.ReadFile("./lineConfig.json")
+	file, err := os.ReadFile(ConfigPath)
 	if err != nil {
 		return RunConfig{}, err
 	}
@@ -36,12 +41,12 @@ func GetBiliCookie() (BiliUtils.BiliCookieConfig, error) {
 
 func SetConfig(sConfig RunConfig) bool {
 	ConfigJson, _ := json.MarshalIndent(sConfig, "", " ")
-	lineupConfig := "./lineConfig.json"
+	lineupConfig := ConfigPath
 	_, ReadConfigErr := os.Open(lineupConfig)
 	if ReadConfigErr != nil {
 		fmt.Println("配置文件不存在，尝试创建")
 		_, ConfigErr := os.Create(lineupConfig)
-		_, LineCreate := os.Create("./line.json")
+		_, LineCreate := os.Create(LineConfigPath)
 		if ConfigErr != nil || LineCreate != nil {
 			fmt.Println("配置文件创建失败", ConfigErr.Error(), LineCreate.Error())
 			return false
@@ -67,7 +72,7 @@ func SetConfig(sConfig RunConfig) bool {
 
 func SetLine(lp LineRow) {
 	lineJson, _ := json.MarshalIndent(lp, "", " ")
-	lineConfigFile := "./line.json"
+	lineConfigFile := LineConfigPath
 	WriteErr := os.WriteFile(lineConfigFile, lineJson, 0666)
 	if WriteErr != nil {
 		fmt.Println("队列文件更新失败")
@@ -75,7 +80,7 @@ func SetLine(lp LineRow) {
 }
 
 func GetLine() (line LineRow, err error) {
-	lineConfigFile := "./line.json"
+	lineConfigFile := LineConfigPath
 	var LineGet LineRow
 	file, err := os.ReadFile(lineConfigFile)
 	if err != nil {

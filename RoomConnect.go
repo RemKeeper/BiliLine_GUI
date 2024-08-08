@@ -1,111 +1,65 @@
 package main
 
 import (
+	"fmt"
+	"fyne.io/fyne/v2/dialog"
+	"github.com/Akegarasu/blivedm-go/client"
+	"github.com/Akegarasu/blivedm-go/message"
 	"regexp"
-
-	"golang.org/x/exp/slog"
-
-	"github.com/vtb-link/bianka/basic"
-
-	"github.com/vtb-link/bianka/live"
-	"github.com/vtb-link/bianka/proto"
+	"strconv"
 )
 
-func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
-	cmd, data, err := proto.AutomaticParsingMessageCommand(msg.Payload())
-	if err != nil {
-		return err
-	}
-	// 你可以使用cmd进行switch
-	switch cmd {
-	case proto.CmdLiveOpenPlatformDanmu:
-		if globalConfiguration.IsOnlyGift {
-			break
+func BlackRoomConnect(RoomId int) {
+	c := client.NewClient(RoomId)        // 房间号
+	c.SetCookie(BiliCookieConfig.Cookie) // 由于 B站 反爬虫改版，现在需要使用已登陆账号的 Cookie 才可以正常获取弹幕。如果不设置 Cookie，获取到的弹幕昵称、UID都被限制。还有可能弹幕限流，无法获取到全部内容。
+	//弹幕事件
+	c.OnDanmaku(func(danmaku *message.Danmaku) {
+		//if danmaku.Type == message.EmoticonDanmaku {
+		//	fmt.Printf("[弹幕表情] %s：表情URL： %s\n", danmaku.Sender.Uname, danmaku.Emoticon.Url)
+		//} else {
+		//	fmt.Printf("[弹幕] %s：%s\n", danmaku.Sender.Uname, danmaku.Content)
+		//}
+		ResponseQueCtrl(danmaku)
+	})
+	// 醒目留言事件
+	c.OnSuperChat(func(superChat *message.SuperChat) {
+		fmt.Printf("[SC|%d元] %s: %s\n", superChat.Price, superChat.UserInfo.Uname, superChat.Message)
+	})
+	// 礼物事件
+	c.OnGift(func(gift *message.Gift) {
+		if gift.CoinType == "gold" {
+			fmt.Printf("[礼物] %s 的 %s %d 个 共%.2f元\n", gift.Uname, gift.GiftName, gift.Num, float64(gift.Num*gift.Price)/1000)
+			if !globalConfiguration.AutoJoinGiftLine {
+				return
+			}
+			if line.GiftIndex[strconv.Itoa(gift.Uid)] != 0 {
+				return
+			}
 		}
-
-		DanmuData := data.(*proto.CmdDanmuData)
-		slog.Info(DanmuData.Uname, DanmuData.Msg)
-		ResponseQueCtrl(DanmuData)
-
-	case proto.CmdLiveOpenPlatformSendGift:
-		GiftData := data.(*proto.CmdSendGiftData)
-
-		if !globalConfiguration.AutoJoinGiftLine {
-			break
-		}
-		if line.GiftIndex[GiftData.OpenID] != 0 {
-			break
-		}
-
-		if !GiftData.Paid {
-			break
-		}
-
-		FindAndModifyDiscountGift(GiftData)
 
 		lineTemp := GiftLine{
-			OpenID: GiftData.OpenID,
-			// OpenID:     strconv.Itoa(DiscountGiftData.Uid),
-			UserName:   GiftData.Uname,
-			Avatar:     GiftData.Uface,
+			OpenID:     strconv.Itoa(gift.Uid),
+			UserName:   gift.Uname,
+			Avatar:     gift.Face,
 			PrintColor: globalConfiguration.GiftPrintColor,
-			GiftPrice:  float64(GiftData.Price * GiftData.GiftNum / 1000),
+			GiftPrice:  float64(gift.Num*gift.Price) / 1000,
 		}
-		if (float64(GiftData.GiftNum*GiftData.Price))/1000 >= globalConfiguration.GiftLinePrice {
+		if float64(gift.Num*gift.Price)/1000 >= globalConfiguration.GiftLinePrice {
 			line.GiftLine = append(line.GiftLine, lineTemp)
-			line.GiftIndex[GiftData.OpenID] = len(line.GiftLine)
+			line.GiftIndex[strconv.Itoa(gift.Uid)] = len(line.GiftLine)
 			SendLineToWs(Line{}, lineTemp, GiftLineType)
 			SetLine(line)
 		}
-	case live.CmdLiveOpenPlatformGuard:
-		slog.Info(cmd, data.(*proto.CmdGuardData))
-	}
+	})
+	// 上舰事件
+	c.OnGuardBuy(func(guardBuy *message.GuardBuy) {
+		fmt.Printf("[大航海] %s 开通了 %d 等级的大航海，金额 %d 元\n", guardBuy.Username, guardBuy.GuardLevel, guardBuy.Price/1000)
+	})
 
-	return nil
-}
-
-func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient *basic.WsClient, HeartbeatCloseChan chan bool) {
-	//	初始化应用连接信息配置，自编译请申明以下3个值，需要自行注册开发者账号
-	LinkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
-	//	创建Api连接实例
-	client := live.NewClient(LinkConfig)
-	//	开始身份码认证流程
-
-	AppStart, err := client.AppStart(IdCode)
-	RoomId = AppStart.AnchorInfo.RoomID
+	err := c.Start()
 	if err != nil {
-		slog.Error("应用流程开启失败", err)
-		return nil, "", nil, nil
+		dialog.ShowError(err, MainWindows)
 	}
-	// 开启心跳
-	HeartbeatCloseChan = make(chan bool, 1)
-	NewHeartbeat(client, AppStart.GameInfo.GameID, HeartbeatCloseChan)
-
-	dispatcherHandleMap := basic.DispatcherHandleMap{
-		proto.OperationMessage: messageHandle,
-	}
-	onCloseCallback := func(wcs *basic.WsClient, startResp basic.StartResp, closeType int) {
-		slog.Info("WebsocketClient onClose", startResp)
-		// 注意检查关闭类型, 避免无限重连
-		if closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
-			slog.Info("WebsocketClient exit")
-			return
-		}
-		err := wcs.Reconnection(startResp)
-		if err != nil {
-			slog.Error("Reconnection fail", err)
-		}
-	}
-	// 一键开启websocket
-	wsClient, err := basic.StartWebsocket(AppStart, dispatcherHandleMap, onCloseCallback, logger)
-	if err != nil {
-		panic(err)
-	}
-	return client, AppStart.GameInfo.GameID, wsClient, HeartbeatCloseChan
-}
-
-func BlackRoomConnect(RoomId int64) {
-
 }
 
 var KeyWordMatchMap = make(map[string]bool)

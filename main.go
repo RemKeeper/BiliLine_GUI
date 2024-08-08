@@ -5,11 +5,10 @@ import (
 	_ "embed"
 	"fmt"
 	"fyne.io/fyne/v2/theme"
+	"strconv"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/vtb-link/bianka/basic"
-	"github.com/vtb-link/bianka/live"
 	"golang.org/x/exp/slog"
 
 	"fyne.io/fyne/v2"
@@ -41,7 +40,7 @@ func main() {
 	}
 
 	r := &lumberjack.Logger{
-		Filename:   "./BLine.log",
+		Filename:   "./BLine_black.log",
 		LocalTime:  true,
 		MaxSize:    1,
 		MaxAge:     3,
@@ -51,25 +50,20 @@ func main() {
 
 	logger = slog.New(slog.NewJSONHandler(r, nil))
 	slog.SetDefault(logger)
-
-	//go ResponseQueCtrl()
-
-	// CleanOldVersion()
-
 	svgResource := fyne.NewStaticResource("icon.svg", icon)
 	// 资源初始化区域
 	App := app.New()
 	App.Settings().SetTheme(theme.DarkTheme())
 	// 窗口大体定义区域
-	NewVersion, UpdateStatus := CheckVersion()
-
-	if UpdateStatus {
-		UpdateWindows := App.NewWindow("有新版本")
-		UpdateWindows.Resize(fyne.NewSize(300, 300))
-		UpdateUI := MakeUpdateUI(NewVersion)
-		UpdateWindows.SetContent(UpdateUI)
-		UpdateWindows.Show()
-	}
+	//NewVersion, UpdateStatus := CheckVersion()
+	//
+	//if UpdateStatus {
+	//	UpdateWindows := App.NewWindow("有新版本")
+	//	UpdateWindows.Resize(fyne.NewSize(300, 300))
+	//	UpdateUI := MakeUpdateUI(NewVersion)
+	//	UpdateWindows.SetContent(UpdateUI)
+	//	UpdateWindows.Show()
+	//}
 	MainWindows = App.NewWindow("未初始化")
 	MainWindows.SetIcon(svgResource)
 
@@ -82,40 +76,18 @@ func main() {
 		err = fmt.Errorf("cookie失效")
 	}
 
-	var AppClient *live.Client
-	var GameId string
-	var CloseHeartbeatChan chan bool
-	var WsClient *basic.WsClient
 	if err != nil {
 		slog.Error("Get config Err", err)
 		MainWindows.SetContent(MakeConfigUI(MainWindows, RunConfig{}))
 	} else {
+		RoomId, _ = strconv.Atoi(globalConfiguration.IdCode)
 		go func() {
-			client, gameId, wsClient, closeChan := RoomConnect(globalConfiguration.IdCode)
-			AppClient = client
-			CloseHeartbeatChan = closeChan
-			GameId = gameId
-			WsClient = wsClient
+			BlackRoomConnect(RoomId)
 		}()
 		KeyWordMatchMap = make(map[string]bool)
 		KeyWordMatchInit(globalConfiguration.LineKey)
 		MainWindows.SetContent(MakeMainUI(MainWindows, globalConfiguration))
 	}
-
-	defer func() {
-		fmt.Println("触发关闭函数")
-
-		if WsClient != nil {
-			WsClient.Close()
-		}
-
-		if AppClient != nil {
-			AppClient.AppEnd(GameId)
-		} else {
-			return
-		}
-		CloseHeartbeatChan <- true
-	}()
 
 	CtrlWindows := App.NewWindow("控制界面 点击两次 ╳ 退出")
 	CtrlWindows.SetIcon(svgResource)

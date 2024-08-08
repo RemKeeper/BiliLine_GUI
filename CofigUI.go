@@ -75,7 +75,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	})
 	IsOnlyGiftSwitch.Checked = Config.IsOnlyGift
 
-	IsOnlyFansSwitch := widget.NewCheck("是否开启   <!->仅限<-!>   佩戴粉丝牌排队", func(status bool) {})
+	IsOnlyFansSwitch := widget.NewCheck("是否开启   <!->仅限<-!>   佩戴粉丝牌排队 下方输入框为粉丝牌等级限制", func(status bool) {})
 	IsOnlyFansSwitch.Checked = Config.IsOnlyFans
 
 	JoinLineFansMedalLevelInput := widget.NewEntry()
@@ -174,6 +174,10 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		GiftLinePriceFloat64, err := strconv.ParseFloat(GiftPriceInput.Text, 10)
 		LineMaxLengthInt, err := strconv.Atoi(LineMaxLengthInput.Text)
 		ScrollIntervalInt, err := strconv.Atoi(ScrollIntervalInput.Text)
+
+		IdCodeInputInt, err := strconv.Atoi(IdCodeInput.Text)
+
+		RoomId = IdCodeInputInt
 
 		switch {
 		case len(IdCodeInput.Text) == 0:
