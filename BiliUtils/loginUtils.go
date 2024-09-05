@@ -129,6 +129,7 @@ const (
 	CookiePath     = "biliCookie.json"
 	GetQrUrl       = "https://passport.bilibili.com/x/passport-login/web/qrcode/generate"
 	GetUserInfoUrl = "https://api.bilibili.com/x/web-interface/card?mid=%d"
+	Referer        = "https://passport.bilibili.com/login"
 )
 
 // GetLoginKeyAndLoginUrl 获取二维码内容和密钥
@@ -137,6 +138,7 @@ func GetLoginKeyAndLoginUrl() (QrKey, QrUrl string) {
 	client := http.Client{}
 	req, _ := http.NewRequest("GET", GetQrUrl, nil)
 	req.Header.Set("User-Agent", UserAgent)
+	req.Header.Set("Referer", Referer)
 	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
@@ -155,6 +157,7 @@ func GetQRCodeState(loginKey string) (IsLogin bool, LoginData gjson.Result, err 
 	client := http.Client{}
 	req, _ := http.NewRequest("GET", apiUrl+fmt.Sprintf("?qrcode_key=%s", loginKey), nil)
 	req.Header.Set("User-Agent", UserAgent)
+	req.Header.Set("Referer", Referer)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
@@ -215,6 +218,7 @@ func VerifyLogin(cookie string) (bool, gjson.Result, string) {
 	req, _ := http.NewRequest("GET", u, nil)
 	req.Header.Set("User-Agent", UserAgent)
 	req.Header.Set("Cookie", cookie)
+	req.Header.Set("Referer", Referer)
 	resp, err := client.Do(req)
 	if err != nil {
 		panic(err)
@@ -223,12 +227,15 @@ func VerifyLogin(cookie string) (bool, gjson.Result, string) {
 	body, _ := io.ReadAll(resp.Body)
 	data := gjson.ParseBytes(body)
 
+	ImgKey = data.Get("data.wbi_img.img_url").String()
+	SubKey = data.Get("data.wbi_img.sub_url").String()
 	isLogin := data.Get("data.isLogin").Bool()
 	var csrf string
 	if isLogin {
 		reg := regexp.MustCompile(`bili_jct=([0-9a-zA-Z]+)`)
 		csrf = reg.FindStringSubmatch(cookie)[1]
 	}
+
 	return isLogin, data, csrf
 }
 

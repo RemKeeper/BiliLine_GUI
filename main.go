@@ -76,6 +76,8 @@ func main() {
 		err = fmt.Errorf("cookie失效")
 	}
 
+	body := BiliUtils.WbiClient("https://api.bilibili.com/x/space/wbi/acc/relation?mid=453787149", BiliCookieConfig.Cookie)
+	fmt.Println(string(body))
 	if err != nil {
 		slog.Error("Get config Err", err)
 		MainWindows.SetContent(MakeConfigUI(MainWindows, RunConfig{}))

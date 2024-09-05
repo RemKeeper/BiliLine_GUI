@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/atotto/clipboard"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -26,12 +27,21 @@ func MakeCtrlUI() *fyne.Container {
 				vbox.RemoveAll()
 				for _, i2 := range OldLine.GuardLine {
 					LineTemp := i2
-					LineBoxItem[LineTemp.OpenID] = container.NewHBox(canvas.NewText(LineTemp.UserName, LineTemp.PrintColor.ToRGBA()), widget.NewButton("删除", func() {
-						vbox.Remove(LineBoxItem[LineTemp.OpenID])
-						DeleteLine(LineTemp.OpenID)
-						delete(LineBoxItem, LineTemp.OpenID)
-						CommonLength = len(OldLine.GuardLine)
-					}))
+					LineBoxItem[LineTemp.OpenID] = container.NewHBox(
+						canvas.NewText(LineTemp.UserName, LineTemp.PrintColor.ToRGBA()),
+						widget.NewButton("删除", func() {
+							vbox.Remove(LineBoxItem[LineTemp.OpenID])
+							DeleteLine(LineTemp.OpenID)
+							delete(LineBoxItem, LineTemp.OpenID)
+							CommonLength = len(OldLine.GuardLine)
+						}),
+						widget.NewButton("复制", func() {
+							err := clipboard.WriteAll(LineTemp.UserName)
+							if err != nil {
+								return
+							}
+						}),
+					)
 					vbox.Add(LineBoxItem[LineTemp.OpenID])
 				}
 
@@ -42,7 +52,14 @@ func MakeCtrlUI() *fyne.Container {
 						DeleteLine(LineTemp.OpenID)
 						delete(LineBoxItem, LineTemp.OpenID)
 						CommonLength = len(OldLine.GiftLine)
-					}))
+					}),
+						widget.NewButton("复制", func() {
+							err := clipboard.WriteAll(LineTemp.UserName)
+							if err != nil {
+								return
+							}
+						}),
+					)
 					vbox.Add(LineBoxItem[LineTemp.OpenID])
 				}
 
@@ -54,7 +71,14 @@ func MakeCtrlUI() *fyne.Container {
 							DeleteLine(LineTemp.OpenID)
 							delete(LineBoxItem, LineTemp.OpenID)
 							CommonLength = len(OldLine.CommonLine)
-						}))
+						}),
+							widget.NewButton("复制", func() {
+								err := clipboard.WriteAll(LineTemp.UserName)
+								if err != nil {
+									return
+								}
+							}),
+						)
 						vbox.Add(LineBoxItem[LineTemp.OpenID])
 					}
 				}

@@ -231,6 +231,9 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 
 		}
 	})
+
+	SpaceLabel := widget.NewLabel("\n\n\n\n\n\n\n\n\n\n")
+
 	ConfigVbox := container.NewVBox(
 		IdCodeInput,
 		LoginBiliAccount,
@@ -250,6 +253,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		AutoScrollLine,
 		ScrollIntervalInput,
 		StartButton,
+		SpaceLabel,
 	)
 
 	ScrollBox := container.NewVScroll(ConfigVbox)
