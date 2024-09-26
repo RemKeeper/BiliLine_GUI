@@ -9,6 +9,8 @@
 *.dylib
 *.apk
 
+.idea
+
 #Config file
 *.json
 
