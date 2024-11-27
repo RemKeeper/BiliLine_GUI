@@ -3,12 +3,10 @@ package main
 import (
 	_ "embed"
 	"fmt"
-
-	"gopkg.in/natefinch/lumberjack.v2"
-
 	"github.com/vtb-link/bianka/basic"
 	"github.com/vtb-link/bianka/live"
 	"golang.org/x/exp/slog"
+	"gopkg.in/natefinch/lumberjack.v2"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -21,7 +19,9 @@ var icon []byte
 var (
 	RoomId              int
 	MainWindows         fyne.Window
+	CtrlWindows         fyne.Window
 	line                LineRow
+	SpecialUserList     map[string]int64
 	globalConfiguration RunConfig
 )
 
@@ -30,6 +30,8 @@ var logger *slog.Logger
 //var DanmuDataChan = make(chan *proto.CmdDanmuData, 20)
 
 func main() {
+
+	// 为全局变量赋值
 
 	line.GuardIndex = make(map[string]int)
 	line.GiftIndex = make(map[string]int)
@@ -104,7 +106,7 @@ func main() {
 		AppClient.AppEnd(GameId)
 	}()
 
-	CtrlWindows := App.NewWindow("控制界面 点击两次 ╳ 退出")
+	CtrlWindows = App.NewWindow("控制界面 点击两次 ╳ 退出")
 	CtrlWindows.SetIcon(svgResource)
 	// 关闭此窗口退出应用
 	CtrlWindows.SetMaster()

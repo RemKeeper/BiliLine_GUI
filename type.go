@@ -168,7 +168,8 @@ type RunConfig struct {
 	//滚动间隔
 	ScrollInterval int
 	//自动滚动队列
-	AutoScrollLine bool
+	AutoScrollLine  bool
+	SpecialUserList map[string]int64
 }
 
 type LineColor struct {

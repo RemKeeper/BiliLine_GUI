@@ -27,6 +27,10 @@ func ResponseQueCtrl(DmParsed *proto.CmdDanmuData) {
 		SendWhereToWs(DmParsed.OpenID)
 	}
 
+	if globalConfiguration.IsOnlyGift {
+		return
+	}
+
 	// 用户发送关键词响应
 	if !KeyWordMatchMap[DmParsed.Msg] {
 		return

@@ -19,9 +19,6 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 	// 你可以使用cmd进行switch
 	switch cmd {
 	case proto.CmdLiveOpenPlatformDanmu:
-		if globalConfiguration.IsOnlyGift {
-			break
-		}
 
 		DanmuData := data.(*proto.CmdDanmuData)
 		slog.Info(DanmuData.Uname, DanmuData.Msg)
