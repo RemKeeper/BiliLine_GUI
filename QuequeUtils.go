@@ -21,11 +21,13 @@ func ResponseQueCtrl(DmParsed *proto.CmdDanmuData) {
 	if DmParsed.Msg == "取消排队" {
 		// DeleteLine(strconv.Itoa(DmParsed.Uid))
 		DeleteLine(DmParsed.OpenID)
+		return
 	}
 
 	// 用户发送寻址指令响应
 	if DmParsed.Msg == "我在哪" {
 		SendWhereToWs(DmParsed.OpenID)
+		return
 	}
 
 	if globalConfiguration.IsOnlyGift {
@@ -43,13 +45,14 @@ func ResponseQueCtrl(DmParsed *proto.CmdDanmuData) {
 		return
 	}
 
+	_, ok := SpecialUserList[openID]
 	switch {
 	// 用户为特殊用户
-	case SpecialUserList[openID] != 0:
+	case ok:
 
-		timestamp := SpecialUserList[openID]
+		UserStruct := SpecialUserList[openID]
 		// 判断是否过期
-		if timestamp < time.Now().Unix() {
+		if UserStruct.EndTime < time.Now().Unix() {
 			delete(SpecialUserList, openID)
 			globalConfiguration.SpecialUserList = SpecialUserList
 			SetConfig(globalConfiguration)
@@ -97,6 +100,4 @@ func ResponseQueCtrl(DmParsed *proto.CmdDanmuData) {
 		SetLine(line)
 
 	}
-
-	UpdateControlUIChan <- struct{}{}
 }

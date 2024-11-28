@@ -93,6 +93,15 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		}
 	})
 
+	SpecialSetButton := widget.NewButton("特殊用户设置", func() {
+		//初始化特殊用户设置界面
+		SpecialUserSetWindows = App.NewWindow("特殊用户设置")
+		SpecialUserSetWindows.SetIcon(svgResource)
+		SpecialUserSetWindows.Resize(fyne.NewSize(400, 600))
+		SpecialUserSetWindows.SetContent(DisplaySpecialUserListUI())
+		SpecialUserSetWindows.Show()
+	})
+
 	ReconnectButton := widget.NewButton("重连弹幕服务器", func() {
 		Restart()
 	})
@@ -122,9 +131,9 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			canvas.NewText(difference.String(), color.White),
 		)
 
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, ReconnectButton, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, LiveStarTimeDisplay, LiveKeepTimeDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, SpecialSetButton, ReconnectButton, assist)
 	} else {
-		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, ReconnectButton, assist)
+		return container.NewVBox(TittleDisplay, LiveStatusDisplay, DescDisplay, LiveCoverDisplay, CopyLineUrlButton, CopyDmUrlButton, CopyMusicUrlButton, JumpToConfigUI, SpecialSetButton, ReconnectButton, assist)
 	}
 }
 

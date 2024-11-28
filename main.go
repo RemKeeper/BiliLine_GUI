@@ -7,6 +7,7 @@ import (
 	"github.com/vtb-link/bianka/live"
 	"golang.org/x/exp/slog"
 	"gopkg.in/natefinch/lumberjack.v2"
+	"os"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -17,13 +18,24 @@ import (
 var icon []byte
 
 var (
-	RoomId              int
-	MainWindows         fyne.Window
-	CtrlWindows         fyne.Window
+	App fyne.App
+
+	RoomId                int
+	MainWindows           fyne.Window
+	CtrlWindows           fyne.Window
+	SpecialUserSetWindows fyne.Window
+
 	line                LineRow
-	SpecialUserList     map[string]int64
+	SpecialUserList     map[string]SpecialUserStruct
 	globalConfiguration RunConfig
+
+	svgResource *fyne.StaticResource
 )
+
+var AppClient *live.Client
+var GameId string
+var CloseHeartbeatChan chan bool
+var WsClient *basic.WsClient
 
 var logger *slog.Logger
 
@@ -58,9 +70,9 @@ func main() {
 
 	// CleanOldVersion()
 
-	svgResource := fyne.NewStaticResource("icon.svg", icon)
+	svgResource = fyne.NewStaticResource("icon.svg", icon)
 	// 资源初始化区域
-	App := app.New()
+	App = app.New()
 	App.Settings().SetTheme(theme.DarkTheme())
 	// 窗口大体定义区域
 	NewVersion, UpdateStatus := CheckVersion()
@@ -78,10 +90,6 @@ func main() {
 	//var err error
 	globalConfiguration, err = GetConfig()
 
-	var AppClient *live.Client
-	var GameId string
-	var CloseHeartbeatChan chan bool
-	var WsClient *basic.WsClient
 	if err != nil {
 		slog.Error("Get config Err", err)
 		MainWindows.SetContent(MakeConfigUI(MainWindows, RunConfig{}))
@@ -99,13 +107,11 @@ func main() {
 	}
 
 	defer func() {
-		fmt.Println("触发关闭函数")
-		// CloseConn <- true
-		CloseHeartbeatChan <- true
-		WsClient.Close()
-		AppClient.AppEnd(GameId)
+		CloseRoomConnect(AppClient, GameId, WsClient, CloseHeartbeatChan)
+		App.Quit()
 	}()
 
+	//初始化控制界面
 	CtrlWindows = App.NewWindow("控制界面 点击两次 ╳ 退出")
 	CtrlWindows.SetIcon(svgResource)
 	// 关闭此窗口退出应用
@@ -115,6 +121,8 @@ func main() {
 		ClickCount++
 		if ClickCount > 1 {
 			CtrlWindows.Close()
+			App.Quit()
+			os.Exit(0)
 		}
 	})
 

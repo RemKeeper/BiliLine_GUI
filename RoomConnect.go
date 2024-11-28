@@ -38,7 +38,7 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 			break
 		}
 
-		FindAndModifyDiscountGift(GiftData)
+		//FindAndModifyDiscountGift(GiftData)
 
 		lineTemp := GiftLine{
 			OpenID: GiftData.OpenID,

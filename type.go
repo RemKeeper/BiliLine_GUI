@@ -169,14 +169,14 @@ type RunConfig struct {
 	ScrollInterval int
 	//自动滚动队列
 	AutoScrollLine  bool
-	SpecialUserList map[string]int64
+	SpecialUserList map[string]SpecialUserStruct
 }
 
-//// SpecialUserStruct 特殊用户配置
-//type SpecialUserStruct struct {
-//	endTime int64
-//	UserName string
-//}
+// SpecialUserStruct 特殊用户配置
+type SpecialUserStruct struct {
+	EndTime  int64
+	UserName string
+}
 
 // LineColor 颜色结构
 type LineColor struct {

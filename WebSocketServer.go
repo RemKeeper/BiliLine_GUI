@@ -276,7 +276,7 @@ func WebServer() *http.ServeMux {
 	})
 
 	mux.HandleFunc("/EXIT", func(writer http.ResponseWriter, request *http.Request) {
-		os.Exit(0)
+		CloseRoomConnect(AppClient, GameId, WsClient, CloseHeartbeatChan)
 	})
 
 	return mux

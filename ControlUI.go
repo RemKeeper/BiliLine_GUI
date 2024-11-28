@@ -13,15 +13,17 @@ import (
 )
 
 var (
-	LineBoxItem         = make(map[string]*fyne.Container)
-	mu                  sync.Mutex
-	UpdateControlUIChan = make(chan struct{})
+	LineBoxItem = make(map[string]*fyne.Container)
+	mu          sync.Mutex
 )
 
 func MakeCtrlUI() *fyne.Container {
 
-	SpecialUserList = make(map[string]int64)
-	SpecialUserList = globalConfiguration.SpecialUserList
+	SpecialUserList = make(map[string]SpecialUserStruct)
+
+	if globalConfiguration.SpecialUserList != nil {
+		SpecialUserList = globalConfiguration.SpecialUserList
+	}
 
 	vbox := container.NewVBox()
 	var (
@@ -52,11 +54,14 @@ func MakeCtrlUI() *fyne.Container {
 							if err != nil {
 								dialog.ShowError(errors.New("时间选择错误"), CtrlWindows)
 							}
-							SpecialUserList[LineTemp.OpenID] = timestamp
+							SpecialUserList[LineTemp.OpenID] = SpecialUserStruct{
+								EndTime:  timestamp,
+								UserName: LineTemp.UserName,
+							}
 							globalConfiguration.SpecialUserList = SpecialUserList
 							SetConfig(globalConfiguration)
 							MarkBth.Disable()
-							UpdateControlUIChan <- struct{}{}
+
 						}, CtrlWindows)
 					}
 
@@ -69,7 +74,7 @@ func MakeCtrlUI() *fyne.Container {
 							delete(LineBoxItem, LineTemp.OpenID)
 							mu.Unlock()
 							CommonLength = len(OldLine.GuardLine)
-							UpdateControlUIChan <- struct{}{}
+
 						}), MarkBth)
 					mu.Unlock()
 					vbox.Add(LineBoxItem[LineTemp.OpenID])
@@ -92,11 +97,14 @@ func MakeCtrlUI() *fyne.Container {
 							if err != nil {
 								dialog.ShowError(errors.New("时间选择错误"), CtrlWindows)
 							}
-							SpecialUserList[LineTemp.OpenID] = timestamp
+							SpecialUserList[LineTemp.OpenID] = SpecialUserStruct{
+								EndTime:  timestamp,
+								UserName: LineTemp.UserName,
+							}
 							globalConfiguration.SpecialUserList = SpecialUserList
 							SetConfig(globalConfiguration)
 							MarkBth.Disable()
-							UpdateControlUIChan <- struct{}{}
+
 						}, CtrlWindows)
 					}
 
@@ -109,7 +117,7 @@ func MakeCtrlUI() *fyne.Container {
 							delete(LineBoxItem, LineTemp.OpenID)
 							mu.Unlock()
 							CommonLength = len(OldLine.GiftLine)
-							UpdateControlUIChan <- struct{}{}
+
 						}), MarkBth)
 					mu.Unlock()
 					vbox.Add(LineBoxItem[LineTemp.OpenID])
@@ -133,11 +141,13 @@ func MakeCtrlUI() *fyne.Container {
 								if err != nil {
 									dialog.ShowError(errors.New("时间选择错误"), CtrlWindows)
 								}
-								SpecialUserList[LineTemp.OpenID] = timestamp
+								SpecialUserList[LineTemp.OpenID] = SpecialUserStruct{
+									EndTime:  timestamp,
+									UserName: LineTemp.UserName,
+								}
 								globalConfiguration.SpecialUserList = SpecialUserList
 								SetConfig(globalConfiguration)
 								MarkBth.Disable()
-								UpdateControlUIChan <- struct{}{}
 							}, CtrlWindows)
 						}
 
@@ -151,7 +161,6 @@ func MakeCtrlUI() *fyne.Container {
 								delete(LineBoxItem, LineTemp.OpenID)
 								mu.Unlock()
 								CommonLength = len(OldLine.CommonLine)
-								UpdateControlUIChan <- struct{}{}
 							}), MarkBth,
 						)
 						mu.Unlock()
@@ -164,7 +173,7 @@ func MakeCtrlUI() *fyne.Container {
 				CommonLength = len(OldLine.CommonLine)
 				vbox.Refresh()
 			}
-			<-UpdateControlUIChan
+			time.Sleep(1 * time.Second)
 		}
 	}()
 	return vbox

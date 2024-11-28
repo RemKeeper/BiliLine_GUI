@@ -4,7 +4,12 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/widget"
+	"github.com/vtb-link/bianka/basic"
+	"image/color"
 	"math/rand"
 	"net/http"
 	"os"
@@ -184,6 +189,44 @@ func assistUI() *fyne.Container {
 	return Cont
 }
 
+func DisplaySpecialUserListUI() *fyne.Container {
+	SpecialUserBoxItem := make(map[string]*fyne.Container)
+
+	Cont := container.NewVBox()
+	for k, v := range SpecialUserList {
+		var timeCanvas = canvas.NewText(time.Unix(v.EndTime, 0).Format("2006-01-02 15:04:05"), color.White)
+		SpecialUserBoxItem[k] = container.NewHBox(
+			canvas.NewText(v.UserName, color.White),
+			timeCanvas,
+			widget.NewButton("删除", func() {
+				delete(SpecialUserList, k)
+				globalConfiguration.SpecialUserList = SpecialUserList
+				SetConfig(globalConfiguration)
+				Cont.Remove(SpecialUserBoxItem[k])
+			}),
+			widget.NewButton("修改截止时间", func() {
+				var selectedYear, selectedMonth, selectedDay string
+				dialog.ShowCustomConfirm("选择截止日期", "确定", "取消", NewDatePicker(&selectedYear, &selectedMonth, &selectedDay), func(b bool) {
+					timestamp, err := ConvertToTimestamp(selectedYear, selectedMonth, selectedDay)
+					if err != nil {
+						dialog.ShowError(errors.New("时间选择错误"), CtrlWindows)
+					}
+					SpecialUserList[k] = SpecialUserStruct{
+						EndTime:  timestamp,
+						UserName: v.UserName,
+					}
+					globalConfiguration.SpecialUserList = SpecialUserList
+					SetConfig(globalConfiguration)
+					timeCanvas.Text = time.Unix(timestamp, 0).Format("2006-01-02 15:04:05")
+					Cont.Refresh()
+				}, SpecialUserSetWindows)
+			}),
+		)
+		Cont.Add(SpecialUserBoxItem[k])
+	}
+	return Cont
+}
+
 func randomInt(min, max int) int {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	return rand.Intn(max-min+1) + min
@@ -253,4 +296,12 @@ func NewHeartbeat(client *live.Client, GameId string, CloseChan chan bool) {
 			}
 		}
 	}()
+}
+
+func CloseRoomConnect(AppClient *live.Client, GameId string, WsClient *basic.WsClient, HeartbeatCloseChan chan bool) {
+	fmt.Println("触发关闭函数")
+	HeartbeatCloseChan <- true
+	WsClient.Close()
+	AppClient.AppEnd(GameId)
+	os.Exit(0)
 }
