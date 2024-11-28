@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -32,6 +33,7 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	if err != nil {
 		dialog.ShowError(DisplayError{Message: "获得房间信息错误 请重新输入房间号"}, Windows)
 	}
+
 	if RoomInformationObtained.Code != 0 {
 		dialog.ShowError(DisplayError{Message: "房间号不存在，请检查是否输入正确"}, Windows)
 	}
@@ -108,9 +110,6 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		}))
 	}
 
-	//if err == nil {
-	//	BulletScreenClient, _ = StartConnect(Config)
-	//}
 	if RoomInformationObtained.Data.LiveStatus == 1 {
 		LiveStarTimeDisplay := container.NewHBox(
 			canvas.NewText("直播开始时间:", color.White),
@@ -144,4 +143,17 @@ func GetRoomInfo(RoomId string) (RoomInfo, error) {
 		return RoomInfo{}, err
 	}
 	return GetRoomInfo, nil
+}
+
+func MakeSpecialManagerList(SpecialUserList map[string]int64) *fyne.Container {
+	vbox := container.NewVBox()
+	for k, v := range SpecialUserList {
+		vbox.Add(container.NewHBox(canvas.NewText(k, color.White), canvas.NewText("到期时间:"+TimestampToTime(v).String(), color.White)))
+	}
+	return vbox
+}
+
+// TimestampToTime 时间戳转时间
+func TimestampToTime(timestamp int64) (FormatTime time.Time) {
+	return time.Unix(timestamp, 0)
 }

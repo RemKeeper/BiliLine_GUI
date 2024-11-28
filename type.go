@@ -172,6 +172,13 @@ type RunConfig struct {
 	SpecialUserList map[string]int64
 }
 
+//// SpecialUserStruct 特殊用户配置
+//type SpecialUserStruct struct {
+//	endTime int64
+//	UserName string
+//}
+
+// LineColor 颜色结构
 type LineColor struct {
 	R uint32
 	G uint32

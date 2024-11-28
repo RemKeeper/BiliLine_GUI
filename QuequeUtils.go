@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/vtb-link/bianka/proto"
 	"strings"
+	"time"
 )
 
 func ResponseQueCtrl(DmParsed *proto.CmdDanmuData) {
@@ -43,6 +44,30 @@ func ResponseQueCtrl(DmParsed *proto.CmdDanmuData) {
 	}
 
 	switch {
+	// 用户为特殊用户
+	case SpecialUserList[openID] != 0:
+
+		timestamp := SpecialUserList[openID]
+		// 判断是否过期
+		if timestamp < time.Now().Unix() {
+			delete(SpecialUserList, openID)
+			globalConfiguration.SpecialUserList = SpecialUserList
+			SetConfig(globalConfiguration)
+			return
+		}
+
+		lineTemp := Line{
+			// OpenID:     DmParsed.OpenID,
+			OpenID:     openID,
+			UserName:   DmParsed.Uname,
+			Avatar:     DmParsed.UFace,
+			PrintColor: globalConfiguration.GuardPrintColor,
+		}
+		line.GuardLine = append(line.GuardLine, lineTemp)
+		//line.GuardIndex[DmParsed.OpenID] = len(line.GuardLine)
+		line.GuardIndex[openID] = len(line.GuardLine)
+		SendLineToWs(lineTemp, GiftLine{}, GuardLineType)
+		SetLine(line)
 	// 用户为舰长或提督
 	case DmParsed.GuardLevel <= 3 && DmParsed.GuardLevel != 0:
 		lineTemp := Line{
@@ -72,4 +97,6 @@ func ResponseQueCtrl(DmParsed *proto.CmdDanmuData) {
 		SetLine(line)
 
 	}
+
+	UpdateControlUIChan <- struct{}{}
 }
