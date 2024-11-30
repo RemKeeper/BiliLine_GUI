@@ -53,6 +53,7 @@ func MakeCtrlUI() *fyne.Container {
 							timestamp, err := ConvertToTimestamp(selectedYear, selectedMonth, selectedDay)
 							if err != nil {
 								dialog.ShowError(errors.New("时间选择错误"), CtrlWindows)
+								return
 							}
 							SpecialUserList[LineTemp.OpenID] = SpecialUserStruct{
 								EndTime:  timestamp,
@@ -96,6 +97,7 @@ func MakeCtrlUI() *fyne.Container {
 							timestamp, err := ConvertToTimestamp(selectedYear, selectedMonth, selectedDay)
 							if err != nil {
 								dialog.ShowError(errors.New("时间选择错误"), CtrlWindows)
+								return
 							}
 							SpecialUserList[LineTemp.OpenID] = SpecialUserStruct{
 								EndTime:  timestamp,
@@ -140,6 +142,7 @@ func MakeCtrlUI() *fyne.Container {
 								timestamp, err := ConvertToTimestamp(selectedYear, selectedMonth, selectedDay)
 								if err != nil {
 									dialog.ShowError(errors.New("时间选择错误"), CtrlWindows)
+									return
 								}
 								SpecialUserList[LineTemp.OpenID] = SpecialUserStruct{
 									EndTime:  timestamp,
