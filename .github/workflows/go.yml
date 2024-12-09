@@ -1,0 +1,66 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+
+    - name: Get version from Version.go
+      id: get_version
+      run: |
+        version=$(grep 'NowVersion\s*=' Version.go | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
+        echo "VERSION=$version" >> $GITHUB_ENV
+
+    - name: Build the executable
+      run: |
+        go build -o "排队姬v${{ env.VERSION }}.exe"
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: 排队姬
+        path: 排队姬v${{ env.VERSION }}.exe
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: 排队姬
+        path: .
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: 排队姬v${{ env.VERSION }}.exe
+        asset_name: 排队姬v${{ env.VERSION }}.exe
+        asset_content_type: application/octet-stream
