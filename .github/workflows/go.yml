@@ -22,8 +22,9 @@ jobs:
     - name: Get version from Version.go
       id: get_version
       run: |
-        version=$(grep 'NowVersion\s*=' Version.go | sed -E 's/.*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
-        echo "VERSION=$version" >> $GITHUB_ENV
+        $version = Select-String -Path Version.go -Pattern 'NowVersion\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)"' | ForEach-Object { $_.Matches.Groups[1].Value }
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+      shell: pwsh
 
     - name: Build the executable
       run: |
