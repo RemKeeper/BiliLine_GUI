@@ -40,8 +40,16 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	GiftPriceDisplaySwitch.Checked = Config.GiftPriceDisplay
 
 	IsOnlyGiftSwitch := widget.NewCheck("是否开启   <!->仅限<-!>   付费用户排队(舰长/礼物)", func(status bool) {
-		GiftJoinLine.SetChecked(status)
 	})
+
+	IsOnlyGiftSwitch.OnChanged = func(status bool) {
+		if status {
+			dialog.ShowConfirm("警告", "开启后只有舰长和送礼物的用户才能加入队列", func(b bool) {
+				IsOnlyGiftSwitch.SetChecked(status)
+			}, Windows)
+		}
+	}
+
 	IsOnlyGiftSwitch.Checked = Config.IsOnlyGift
 
 	Guard := canvas.NewText("舰长", color.RGBA{R: 255, G: 255, B: 255, A: 255})
@@ -77,7 +85,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	)
 
 	GiftPriceInput := widget.NewEntry()
-	GiftPriceInput.SetPlaceHolder("加入队列的礼物价格门槛")
+	GiftPriceInput.SetPlaceHolder("加入队列的礼物价格门槛(RMB)")
 	if Config.GiftLinePrice > 0 {
 		GiftPriceInput.Text = strconv.FormatFloat(Config.GiftLinePrice, 'f', -1, 64)
 	}
