@@ -39,7 +39,7 @@ jobs:
 
     - name: Build the executable
       run: |
-        go build -o "BiliLine_v${{ env.VERSION }}.exe -ldflags "-w -s -H=windowsgui"
+        go build -o "BiliLine_v${{ env.VERSION }}.exe" -ldflags "-w -s -H=windowsgui"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
@@ -95,6 +95,6 @@ jobs:
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./BiliLine_v${{ env.VERSION }}.exe
+        asset_path: "/home/runner/work/BiliLine_GUI/BiliLine_GUI/BiliLine_v${{ env.VERSION }}.exe"
         asset_name: BiliLine_v${{ env.VERSION }}.exe
         asset_content_type: application/octet-stream
