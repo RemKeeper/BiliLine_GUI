@@ -24,6 +24,7 @@ jobs:
       run: |
         $version = Select-String -Path Version.go -Pattern 'NowVersion\s*=\s*"([0-9]+\.[0-9]+\.[0-9]+)"' | ForEach-Object { $_.Matches.Groups[1].Value }
         echo "VERSION=$version" >> $env:GITHUB_ENV
+        echo $version > version.txt
       shell: pwsh
 
     - name: Replace variables in code
@@ -36,7 +37,6 @@ jobs:
         Set-Content RoomConnect.go
       shell: pwsh
 
-
     - name: Build the executable
       run: |
         go build -o "排队姬v${{ env.VERSION }}.exe"
@@ -47,9 +47,16 @@ jobs:
         name: 排队姬
         path: 排队姬v${{ env.VERSION }}.exe
 
+    - name: Upload version
+      uses: actions/upload-artifact@v3
+      with:
+        name: version
+        path: version.txt
+
   release:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
     - name: Download artifact
       uses: actions/download-artifact@v3
@@ -57,11 +64,19 @@ jobs:
         name: 排队姬
         path: .
 
+    - name: Download version
+      uses: actions/download-artifact@v3
+      with:
+        name: version
+        path: .
 
-    - name: Set tag name
-      id: set_tag_name
-      run: echo "TAG_NAME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+    - name: Read version
+      id: read_version
+      run: echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
 
+#    - name: Set tag name
+#      id: set_tag_name
+#      run: echo "TAG_NAME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
     - name: Create Release
       id: create_release
@@ -69,12 +84,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       with:
-        tag_name: ${{ env.TAG_NAME }}
+        tag_name: ${{ env.VERSION }}
         release_name: Release ${{ env.VERSION }}
         draft: false
         prerelease: false
-
-
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
