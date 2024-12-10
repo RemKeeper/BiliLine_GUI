@@ -58,17 +58,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Download version
+      uses: actions/download-artifact@v3
+      with:
+        name: version
+        path: .
+
     - name: Download artifact
       uses: actions/download-artifact@v3
       with:
         name: 排队姬
         path: .
 
-    - name: Download version
-      uses: actions/download-artifact@v3
-      with:
-        name: version
-        path: .
+
+    - name: Display structure of downloaded files
+      run: ls -R
+      working-directory: path/to/artifact
 
     - name: Read version
       id: read_version
