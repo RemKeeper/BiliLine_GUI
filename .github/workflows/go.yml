@@ -26,21 +26,13 @@ jobs:
         echo "VERSION=$version" >> $env:GITHUB_ENV
       shell: pwsh
 
-
-    - name: Set environment variables
-      run: |
-        echo "AccessKey=${{ secrets.ACCESSKEY }}" >> $GITHUB_ENV
-        echo "AccessSecret=${{ secrets.ACCESSSECRET }}" >> $GITHUB_ENV
-        echo "AppID=${{ secrets.APPID }}" >> $GITHUB_ENV
-      shell: pwsh
-
     - name: Replace variables in code
       run: |
-        (Get-Content RoomConnect.go) -replace 'AccessKey\s*=\s*".*"', "AccessKey = `"$env:AccessKey`"" |
+        (Get-Content RoomConnect.go) -replace 'AccessKey\s*=\s*".*"', "AccessKey = `"${{ secrets.ACCESSKEY }}`"" |
         Set-Content RoomConnect.go
-        (Get-Content RoomConnect.go) -replace 'AccessSecret\s*=\s*".*"', "AccessSecret = `"$env:AccessSecret`"" |
+        (Get-Content RoomConnect.go) -replace 'AccessSecret\s*=\s*".*"', "AccessSecret = `"${{ secrets.ACCESSSECRET }}`"" |
         Set-Content RoomConnect.go
-        (Get-Content RoomConnect.go) -replace 'AppID\s*=\s*\d+', "AppID = $env:AppID" |
+        (Get-Content RoomConnect.go) -replace 'AppID\s*=\s*\d+', "AppID = ${{ secrets.APPID }}" |
         Set-Content RoomConnect.go
       shell: pwsh
 
@@ -68,13 +60,13 @@ jobs:
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
-      env:
-        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        release_name: Release ${{ env.VERSION }}
         draft: false
         prerelease: false
+        token: ${{ secrets.ACCESS_TOKEN }}
+
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
