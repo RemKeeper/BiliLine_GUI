@@ -79,10 +79,6 @@ jobs:
       id: read_version
       run: echo "VERSION=$(cat version.txt)" >> $GITHUB_ENV
 
-#    - name: Set tag name
-#      id: set_tag_name
-#      run: echo "TAG_NAME=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
-
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -95,6 +91,8 @@ jobs:
         prerelease: false
 
     - name: Upload Release Asset
+      run: ls -R
+      working-directory: .
       uses: actions/upload-release-asset@v1
       env:
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
