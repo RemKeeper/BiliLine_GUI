@@ -73,7 +73,7 @@ jobs:
 
     - name: Display structure of downloaded files
       run: ls -R
-      working-directory: path/to/artifact
+      working-directory: .
 
     - name: Read version
       id: read_version
