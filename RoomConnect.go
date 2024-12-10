@@ -61,9 +61,16 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 	return nil
 }
 
+var (
+	AccessSecret       = ""
+	AppID        int64 = 123456
+	AccessKey          = ""
+)
+
 func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient *basic.WsClient, HeartbeatCloseChan chan bool) {
 	//	初始化应用连接信息配置，自编译请申明以下3个值
 	LinkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
+
 	//	创建Api连接实例
 	client := live.NewClient(LinkConfig)
 	//	开始身份码认证流程

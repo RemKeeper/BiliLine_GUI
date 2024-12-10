@@ -26,6 +26,25 @@ jobs:
         echo "VERSION=$version" >> $env:GITHUB_ENV
       shell: pwsh
 
+
+    - name: Set environment variables
+      run: |
+        echo "AccessKey=${{ secrets.ACCESSKEY }}" >> $GITHUB_ENV
+        echo "AccessSecret=${{ secrets.ACCESSSECRET }}" >> $GITHUB_ENV
+        echo "AppID=${{ secrets.APPID }}" >> $GITHUB_ENV
+      shell: pwsh
+
+    - name: Replace variables in code
+      run: |
+        (Get-Content RoomConnect.go) -replace 'AccessKey\s*=\s*".*"', "AccessKey = `"$env:AccessKey`"" |
+        Set-Content RoomConnect.go
+        (Get-Content RoomConnect.go) -replace 'AccessSecret\s*=\s*".*"', "AccessSecret = `"$env:AccessSecret`"" |
+        Set-Content RoomConnect.go
+        (Get-Content RoomConnect.go) -replace 'AppID\s*=\s*\d+', "AppID = $env:AppID" |
+        Set-Content RoomConnect.go
+      shell: pwsh
+
+
     - name: Build the executable
       run: |
         go build -o "排队姬v${{ env.VERSION }}.exe"
