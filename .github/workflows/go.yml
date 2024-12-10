@@ -39,13 +39,13 @@ jobs:
 
     - name: Build the executable
       run: |
-        go build -o "排队姬v${{ env.VERSION }}.exe"
+        go build -o "BiliLine_v${{ env.VERSION }}.exe -ldflags "-w -s -H=windowsgui"
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: 排队姬
-        path: 排队姬v${{ env.VERSION }}.exe
+        name: BiliLine_
+        path: BiliLine_v${{ env.VERSION }}.exe
 
     - name: Upload version
       uses: actions/upload-artifact@v3
@@ -67,7 +67,7 @@ jobs:
     - name: Download artifact
       uses: actions/download-artifact@v3
       with:
-        name: 排队姬
+        name: BiliLine_
         path: .
 
     - name: Display structure of downloaded files
@@ -95,6 +95,6 @@ jobs:
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./排队姬v${{ env.VERSION }}.exe
-        asset_name: 排队姬v${{ env.VERSION }}.exe
+        asset_path: ./BiliLine_v${{ env.VERSION }}.exe
+        asset_name: BiliLine_v${{ env.VERSION }}.exe
         asset_content_type: application/octet-stream
