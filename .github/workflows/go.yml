@@ -91,8 +91,6 @@ jobs:
         prerelease: false
 
     - name: Upload Release Asset
-      run: ls -R
-      working-directory: .
       uses: actions/upload-release-asset@v1
       env:
         ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
