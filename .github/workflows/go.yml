@@ -72,7 +72,7 @@ jobs:
 
 
     - name: Display structure of downloaded files
-      run: ls -R
+      run: pwd && ls -R
       working-directory: .
 
     - name: Read version
