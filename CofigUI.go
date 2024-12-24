@@ -1,15 +1,13 @@
 package main
 
 import (
-	"image/color"
-	"strconv"
-	"time"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
+	"image/color"
+	"strconv"
 )
 
 func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
@@ -93,7 +91,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	DisplayQueSize := widget.NewCheck("显示当前队列长度", func(b bool) {})
 	DisplayQueSize.Checked = Config.CurrentQueueSizeDisplay
 
-	EnableMusicServer := widget.NewCheck("启用音乐服务器", func(b bool) {})
+	EnableMusicServer := widget.NewCheck("启用音乐服务器[已半废弃]", func(b bool) {})
 	EnableMusicServer.Checked = Config.EnableMusicServer
 
 	EnableDmDisplayNoSleep := widget.NewCheck("弹幕页面显示不休眠(移动端实验性)", func(b bool) {})
@@ -167,8 +165,6 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			SetConfig(SaveConfig)
 			dialog.ShowInformation("保存成功", "配置已保存,如果涉及身份码修改,请重启", Windows)
 			Restart()
-			time.Sleep(1 * time.Second)
-			Windows.SetContent(MakeMainUI(Windows, SaveConfig))
 
 		}
 	})
