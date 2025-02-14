@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fyne.io/fyne/v2/dialog"
 	"regexp"
 
 	"golang.org/x/exp/slog"
@@ -95,6 +97,17 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 			slog.Info("WebsocketClient exit")
 			return
 		}
+		switch closeType {
+		case live.CloseAuthFailed:
+			dialog.ShowError(errors.New("请求鉴权失败，请检查身份码"), MainWindows)
+		case live.CloseReadingConnError:
+			dialog.ShowError(errors.New("读取链接错误,请重启客户端"), MainWindows)
+		case live.CloseReceivedShutdownMessage:
+			dialog.ShowError(errors.New("收到来自于B站的关闭消息，连接被关闭"), MainWindows)
+		case live.CloseTypeUnknown:
+			dialog.ShowError(errors.New("未知原因导致连接关闭"), MainWindows)
+		}
+
 		err := wcs.Reconnection(startResp)
 		if err != nil {
 			slog.Error("Reconnection fail", err)

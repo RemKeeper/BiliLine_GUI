@@ -118,6 +118,7 @@ func WebServer() *http.ServeMux {
 	})
 
 	mux.HandleFunc("/DmWs", func(writer http.ResponseWriter, request *http.Request) {
+
 		conn, err := upgrader.Upgrade(writer, request, nil)
 		if err != nil {
 			slog.Error("Websocket Upgrade Err:", err.Error())
@@ -180,7 +181,15 @@ func WebServer() *http.ServeMux {
 	})
 
 	mux.HandleFunc("/dm", func(writer http.ResponseWriter, request *http.Request) {
-		_, err := writer.Write(DmDisplayHtml)
+
+		//debugger 读取
+
+		DmDisplayHtml, err := os.ReadFile("Resource/web/DmDisplay.html")
+		if err != nil {
+			panic(err)
+		}
+
+		_, err = writer.Write(DmDisplayHtml)
 		if err != nil {
 			return
 		}

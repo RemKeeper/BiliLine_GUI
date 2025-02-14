@@ -66,7 +66,7 @@
         vertical-align: top;
     }
 
-    .fansMedal{
+    .fansMedal {
         display: flex;
     }
 
@@ -81,6 +81,10 @@
         padding: 2px 5px;
         border-bottom-right-radius: 5px;
         border-top-right-radius: 5px;
+
+        border-top: 1px  solid #e3e3e3; /* 设置外部边框 */
+        border-right: 1px  solid #e3e3e3; /* 设置外部边框 */
+        border-bottom: 1px  solid #e3e3e3; /* 设置外部边框 */
     }
 
     .FansMedalText{
@@ -88,6 +92,10 @@
         padding: 2px 5px;
         border-top-left-radius: 5px;
         border-bottom-left-radius: 5px;
+
+        border-top: 1px  solid #e3e3e3; /* 设置外部边框 */
+        border-left: 1px  solid #e3e3e3; /* 设置外部边框 */
+        border-bottom: 1px  solid #e3e3e3; /* 设置外部边框 */
     }
 
 
@@ -158,10 +166,31 @@
 
     Host = "127.0.0.1:100"
 
-    function addUserStructure(AvatarURL, UserName, DmText, DmType) {
+    function addUserStructure(FansMedalName,FansMedalLevel,AvatarURL, UserName, DmText, DmType) {
         // 创建父容器 <div class="user">
         const userDiv = document.createElement("div");
         userDiv.className = "user";
+
+        //创建用户信息容器 <div class="UserInfoBox">
+        const UserInfoBoxDiv = document.createElement("div");
+        UserInfoBoxDiv.className = "UserInfoBox";
+
+
+
+        //创建粉丝牌容器 <div class="fansMedal">
+        const fansMedalDiv = document.createElement("div");
+        fansMedalDiv.className = "fansMedal";
+
+        //创建粉丝牌文字 <div class="FansMedalText">
+        const FansMedalTextDiv = document.createElement("div");
+        FansMedalTextDiv.className = "FansMedalText";
+        FansMedalTextDiv.textContent = FansMedalName;
+        FansMedalTextDiv.style.background = fansMedalColors[FansMedalLevel]
+
+        //创建粉丝牌等级 <div class="fansMedalLevel">
+        const fansMedalLevelDiv = document.createElement("div");
+        fansMedalLevelDiv.className = "fansMedalLevel";
+        fansMedalLevelDiv.textContent = FansMedalLevel;
 
         // 创建头像容器 <div class="avatar">
         const avatarDiv = document.createElement("div");
@@ -192,7 +221,14 @@
 
         // 将头像容器、用户名容器和弹幕容器添加到父容器
         userDiv.appendChild(avatarDiv);
-        userDiv.appendChild(userNameDiv);
+
+        UserInfoBoxDiv.appendChild(userNameDiv)
+
+        if (FansMedalName !== "") {
+            UserInfoBoxDiv.appendChild(fansMedalDiv)
+        }
+        userDiv.appendChild(UserInfoBoxDiv);
+
 
         if (DmType) {
             // 创建弹幕图片容器 <div class="EmojiImg">
@@ -247,15 +283,34 @@
         let DmSocket = new WebSocket(`ws://${Host}/DmWs`)
 
         DmSocket.onmessage = (event) => {
+
+            //判断返回是否为Connected
+            if (event.data === "Connected") {
+                console.log("连接成功")
+                return
+            }
+
             let ReceiverDmDate = JSON.parse(event.data)
             if (!ReceiverDmDate.dm_type) {
                 console.log("收到一条弹幕")
-                addUserStructure(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.msg, ReceiverDmDate.dm_type)
-                console.log(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.msg, ReceiverDmDate.dm_type)
+                addUserStructure(
+                    ReceiverDmDate.fans_medal_name,
+                    ReceiverDmDate.fans_medal_level,
+                    ReceiverDmDate.uface,
+                    ReceiverDmDate.uname,
+                    ReceiverDmDate.msg,
+                    ReceiverDmDate.dm_type)
+                console.log(ReceiverDmDate.fans_medal_name,ReceiverDmDate.fans_medal_level,ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.msg, ReceiverDmDate.dm_type)
             } else {
                 console.log("收到一个表情包")
-                addUserStructure(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.emoji_img_url, ReceiverDmDate.dm_type)
-                console.log(ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.emoji_img_url, ReceiverDmDate.dm_type)
+                addUserStructure(
+                    ReceiverDmDate.fans_medal_name,
+                    ReceiverDmDate.fans_medal_level,
+                    ReceiverDmDate.uface,
+                    ReceiverDmDate.uname,
+                    ReceiverDmDate.emoji_img_url,
+                    ReceiverDmDate.dm_type)
+                console.log(ReceiverDmDate.fans_medal_name,ReceiverDmDate.fans_medal_level, ReceiverDmDate.uface, ReceiverDmDate.uname, ReceiverDmDate.emoji_img_url, ReceiverDmDate.dm_type)
             }
 
         }

@@ -6,7 +6,7 @@
 
 .user {
     font-size: 40px;
-    font-family:'LineFont' !important;
+    font-family: 'LineFont', sans-serif !important;
     border: 1px solid #ddd;
     padding: 5px;
     margin-top: 5px;
@@ -28,5 +28,5 @@
 #LineSize{
     font-size: 30px;
     align-items: center;
-    font-family:'LineFont' !important;
+    font-family: 'LineFont', sans-serif !important;
 }
