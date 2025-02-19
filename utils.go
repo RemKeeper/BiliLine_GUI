@@ -301,12 +301,6 @@ func NewHeartbeat(client *live.Client, GameId string, CloseChan chan bool) {
 func CloseRoomConnect(AppClient *live.Client, GameId string, WsClient *basic.WsClient, HeartbeatCloseChan chan bool) {
 	fmt.Println("触发关闭函数")
 	// Non-blocking send to HeartbeatCloseChan
-	if HeartbeatCloseChan != nil {
-		select {
-		case HeartbeatCloseChan <- true:
-		default:
-		}
-	}
 
 	if WsClient != nil {
 		WsClient.Close()
@@ -314,5 +308,14 @@ func CloseRoomConnect(AppClient *live.Client, GameId string, WsClient *basic.WsC
 	if AppClient != nil {
 		AppClient.AppEnd(GameId)
 	}
+
+	if HeartbeatCloseChan != nil {
+		select {
+		case HeartbeatCloseChan <- true:
+		default:
+			break
+		}
+	}
+
 	App.Quit()
 }
