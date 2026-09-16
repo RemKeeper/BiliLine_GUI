@@ -28,6 +28,7 @@ var (
 	line                LineRow
 	SpecialUserList     map[string]SpecialUserStruct
 	globalConfiguration RunConfig
+	roomConnectErr      error
 
 	svgResource *fyne.StaticResource
 )
@@ -91,7 +92,7 @@ func main() {
 	globalConfiguration, err = GetConfig()
 
 	if err != nil {
-		slog.Error("Get config Err", err)
+		slog.Error("Get config Err", "err", err)
 		MainWindows.SetContent(MakeConfigUI(MainWindows, RunConfig{}))
 	} else {
 		go func() {

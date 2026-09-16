@@ -3,7 +3,9 @@ package main
 import (
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"io/fs"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,6 +18,42 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/websocket"
 )
+
+const (
+	preferredHttpDisplayPort = 100
+	fallbackHttpDisplayPort  = 10100
+	musicServerPort          = 99
+)
+
+// HttpDisplayPort is the port the queue/danmaku HTTP server actually bound.
+// Windows can use privileged port 100; Linux non-root falls back to 10100.
+// Override with BILILINE_HTTP_PORT.
+var HttpDisplayPort = preferredHttpDisplayPort
+
+func httpDisplayURL(path string) string {
+	if path == "" || path[0] != '/' {
+		path = "/" + path
+	}
+	return fmt.Sprintf("http://127.0.0.1:%d%s", HttpDisplayPort, path)
+}
+
+func musicServerURL(path string) string {
+	if path == "" || path[0] != '/' {
+		path = "/" + path
+	}
+	return fmt.Sprintf("http://127.0.0.1:%d%s", musicServerPort, path)
+}
+
+func httpDisplayListenPorts() []int {
+	if envPort := strings.TrimSpace(os.Getenv("BILILINE_HTTP_PORT")); envPort != "" {
+		port, err := strconv.Atoi(envPort)
+		if err == nil && port > 0 && port <= 65535 {
+			return []int{port}
+		}
+		slog.Error("invalid BILILINE_HTTP_PORT, using defaults", "value", envPort, "err", err)
+	}
+	return []int{preferredHttpDisplayPort, fallbackHttpDisplayPort}
+}
 
 //go:embed Resource/web/index.html
 var QueHtmlFile []byte
@@ -47,16 +85,34 @@ var (
 )
 
 func StartWebServer() {
-	_, _ = http.Get("http://127.0.0.1:100/EXIT")
-
 	handler := handlers.CORS(
 		handlers.AllowedOrigins([]string{"*"}),
 		handlers.AllowCredentials(),
 	)(WebServer())
-	err := http.ListenAndServe(":100", handler)
-	if err != nil {
-		slog.Error(err.Error())
+
+	var ln net.Listener
+	for _, port := range httpDisplayListenPorts() {
+		HttpDisplayPort = port
+		_, _ = http.Get(httpDisplayURL("/EXIT"))
+		addr := ":" + strconv.Itoa(port)
+		listener, err := net.Listen("tcp", addr)
+		if err != nil {
+			slog.Error("HTTP 展示服务监听失败", "port", port, "err", err)
+			continue
+		}
+		ln = listener
+		if tcpAddr, ok := listener.Addr().(*net.TCPAddr); ok {
+			HttpDisplayPort = tcpAddr.Port
+		}
+		break
+	}
+	if ln == nil {
+		slog.Error("HTTP 展示服务启动失败：无可用端口")
 		return
+	}
+	slog.Info("starting HTTP display server", "addr", ln.Addr().String())
+	if err := http.Serve(ln, handler); err != nil {
+		slog.Error("HTTP 展示服务退出", "err", err)
 	}
 }
 
@@ -66,7 +122,7 @@ func WebServer() *http.ServeMux {
 	mux.HandleFunc("/LineWs", func(writer http.ResponseWriter, request *http.Request) {
 		conn, err := upgrader.Upgrade(writer, request, nil)
 		if err != nil {
-			slog.Error(err.Error())
+			slog.Error("Websocket upgrade failed", "err", err)
 			return
 		}
 
@@ -81,7 +137,7 @@ func WebServer() *http.ServeMux {
 		defer func(conn *websocket.Conn) {
 			err := conn.Close()
 			if err != nil {
-				slog.Error("Failed to close connection:", err)
+				slog.Error("Failed to close connection", "err", err)
 				return
 			}
 		}(conn)
@@ -109,7 +165,7 @@ func WebServer() *http.ServeMux {
 			for w := range ConnMapCopy {
 				err = w.WriteMessage(websocket.TextMessage, Chat)
 				if err != nil {
-					slog.Error("Failed to write message:", err)
+					slog.Error("Failed to write message", "err", err)
 					delete(QueueConnMap, w)
 				}
 			}
@@ -121,14 +177,14 @@ func WebServer() *http.ServeMux {
 
 		conn, err := upgrader.Upgrade(writer, request, nil)
 		if err != nil {
-			slog.Error("Websocket Upgrade Err:", err.Error())
+			slog.Error("Websocket Upgrade Err", "err", err)
 			return
 		}
 		DmConnMap[conn] = true
 
 		err = conn.WriteMessage(websocket.TextMessage, []byte("Connected"))
 		if err != nil {
-			slog.Error("Websocket Write Err:", err.Error())
+			slog.Error("Websocket Write Err", "err", err)
 			delete(DmConnMap, conn)
 			return
 		}
@@ -136,7 +192,7 @@ func WebServer() *http.ServeMux {
 		defer func(conn *websocket.Conn) {
 			err := conn.Close()
 			if err != nil {
-				slog.Error("Failed to close connection:", err)
+				slog.Error("Failed to close connection", "err", err)
 				return
 			}
 		}(conn)
@@ -164,7 +220,7 @@ func WebServer() *http.ServeMux {
 			for w := range ConnMapCopy {
 				err = w.WriteMessage(websocket.TextMessage, Chat)
 				if err != nil {
-					slog.Error("Failed to write message:", err)
+					slog.Error("Failed to write message", "err", err)
 					delete(DmConnMap, w)
 				}
 			}
@@ -215,7 +271,7 @@ func WebServer() *http.ServeMux {
 			return nil
 		})
 		if err != nil {
-			slog.Error("Find font err", err)
+			slog.Error("Find font err", "err", err)
 			return
 		}
 	})

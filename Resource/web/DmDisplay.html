@@ -161,9 +161,7 @@
     };
 
 
-    let Host = window.location.host
-
-    Host = "127.0.0.1:100"
+    let Host = window.location.host || "127.0.0.1:10100"
 
     function addUserStructure(FansMedalName, FansMedalLevel, AvatarURL, UserName, DmText, DmType) {
         // 创建父容器 <div class="user">

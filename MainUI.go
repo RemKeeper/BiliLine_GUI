@@ -26,7 +26,16 @@ var Pic404 []byte
 func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	Windows.SetTitle("主页面")
 	var RoomInformationObtained RoomInfo
-	for RoomId == 0 {
+	for RoomId == 0 && roomConnectErr == nil {
+	}
+	if roomConnectErr != nil || RoomId == 0 {
+		dialog.ShowError(DisplayError{Message: "连接直播间失败，请检查身份码或开放平台配置"}, Windows)
+		return container.NewVBox(
+			widget.NewLabel("连接直播间失败"),
+			widget.NewButton("返回配置", func() {
+				Windows.SetContent(MakeConfigUI(Windows, Config))
+			}),
+		)
 	}
 	fmt.Println("主线程房间号", RoomId)
 	RoomInformationObtained, err := GetRoomInfo(strconv.Itoa(RoomId))
@@ -58,7 +67,7 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	var CoverDisplay io.Reader = bytes.NewReader(Pic404)
 	get, err := http.Get(RoomInformationObtained.Data.UserCover)
 	if err != nil {
-		slog.Error("获取直播封面错误", err)
+		slog.Error("获取直播封面错误", "err", err)
 	} else {
 		defer get.Body.Close()
 		CoverDisplay = get.Body
@@ -71,14 +80,14 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		Windows.SetContent(MakeConfigUI(Windows, Config))
 	})
 	CopyLineUrlButton := widget.NewButton("复制排队组件Url", func() {
-		err = clipboard.WriteAll("http://127.0.0.1:100/web")
+		err = clipboard.WriteAll(httpDisplayURL("/web"))
 		if err != nil {
 			dialog.ShowError(DisplayError{"写入剪贴板错误"}, Windows)
 			return
 		}
 	})
 	CopyDmUrlButton := widget.NewButton("复制弹幕组件Url", func() {
-		err := clipboard.WriteAll("http://127.0.0.1:100/dm")
+		err := clipboard.WriteAll(httpDisplayURL("/dm"))
 		if err != nil {
 			dialog.ShowError(DisplayError{"写入剪贴板错误"}, Windows)
 			return
@@ -86,7 +95,7 @@ func MakeMainUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	})
 
 	CopyMusicUrlButton := widget.NewButton("复制音乐组件Url[仅在开启音乐插件后有效]", func() {
-		err := clipboard.WriteAll("http://127.0.0.1:99/music")
+		err := clipboard.WriteAll(musicServerURL("/music"))
 		if err != nil {
 			dialog.ShowError(DisplayError{"写入剪贴板错误"}, Windows)
 			return
@@ -142,6 +151,7 @@ func GetRoomInfo(RoomId string) (RoomInfo, error) {
 	if err != nil {
 		return RoomInfo{}, err
 	}
+	defer get.Body.Close()
 	all, err := io.ReadAll(get.Body)
 	if err != nil {
 		return RoomInfo{}, err
