@@ -2,13 +2,13 @@ package main
 
 import (
 	"errors"
-	"fyne.io/fyne/v2/dialog"
+	"fmt"
 	"regexp"
 
+	"fyne.io/fyne/v2/dialog"
 	"golang.org/x/exp/slog"
 
 	"github.com/vtb-link/bianka/basic"
-
 	"github.com/vtb-link/bianka/live"
 	"github.com/vtb-link/bianka/proto"
 )
@@ -23,7 +23,7 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 	case proto.CmdLiveOpenPlatformDanmu:
 
 		DanmuData := data.(*proto.CmdDanmuData)
-		slog.Info(DanmuData.Uname, DanmuData.Msg)
+		slog.Info("danmu", "uname", DanmuData.Uname, "msg", DanmuData.Msg)
 		ResponseQueCtrl(DanmuData)
 
 	case proto.CmdLiveOpenPlatformSendGift:
@@ -57,7 +57,7 @@ func messageHandle(ws *basic.WsClient, msg *proto.Message) error {
 			SetLine(line)
 		}
 	case live.CmdLiveOpenPlatformGuard:
-		slog.Info(cmd, data.(*proto.CmdGuardData))
+		slog.Info("guard", "cmd", cmd, "data", data.(*proto.CmdGuardData))
 	}
 
 	return nil
@@ -70,6 +70,7 @@ var (
 )
 
 func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient *basic.WsClient, HeartbeatCloseChan chan bool) {
+	roomConnectErr = nil
 	//	初始化应用连接信息配置，自编译请申明以下3个值
 	LinkConfig := live.NewConfig(AccessKey, AccessSecret, AppID)
 
@@ -78,11 +79,12 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 	//	开始身份码认证流程
 
 	AppStart, err := client.AppStart(IdCode)
-	RoomId = AppStart.AnchorInfo.RoomID
 	if err != nil {
-		slog.Error("应用流程开启失败", err)
+		roomConnectErr = err
+		slog.Error("应用流程开启失败", "err", err)
 		return nil, "", nil, nil
 	}
+	RoomId = AppStart.AnchorInfo.RoomID
 	// 开启心跳
 	HeartbeatCloseChan = make(chan bool, 1)
 	NewHeartbeat(client, AppStart.GameInfo.GameID, HeartbeatCloseChan)
@@ -91,7 +93,7 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 		proto.OperationMessage: messageHandle,
 	}
 	onCloseCallback := func(wcs *basic.WsClient, startResp basic.StartResp, closeType int) {
-		slog.Info("WebsocketClient onClose", startResp)
+		slog.Info("WebsocketClient onClose", "startResp", startResp)
 		// 注意检查关闭类型, 避免无限重连
 		if closeType == live.CloseReceivedShutdownMessage || closeType == live.CloseAuthFailed {
 			slog.Info("WebsocketClient exit")
@@ -110,13 +112,17 @@ func RoomConnect(IdCode string) (AppClient *live.Client, GameId string, WsClient
 
 		err := wcs.Reconnection(startResp)
 		if err != nil {
-			slog.Error("Reconnection fail", err)
+			slog.Error("Reconnection fail", "err", err)
 		}
 	}
 	// 一键开启websocket
 	wsClient, err := basic.StartWebsocket(AppStart, dispatcherHandleMap, onCloseCallback, logger)
 	if err != nil {
-		panic(err)
+		slog.Error("Websocket 开启失败", "err", err)
+		if MainWindows != nil {
+			dialog.ShowError(fmt.Errorf("弹幕连接失败: %v", err), MainWindows)
+		}
+		return client, AppStart.GameInfo.GameID, nil, HeartbeatCloseChan
 	}
 	return client, AppStart.GameInfo.GameID, wsClient, HeartbeatCloseChan
 }

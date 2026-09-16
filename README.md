@@ -14,6 +14,28 @@ https://space.bilibili.com/431919235
 
 如有使用问题，请进群 659559309
 
+### 构建与发布
+
+正式发布产物以 **Windows GUI `.exe`** 为主（`go build -ldflags "-w -s -H=windowsgui"`）。
+
+开放平台密钥（`AccessKey` / `AccessSecret` / `AppID`）在源码中保持空占位，**不要写入仓库**。GitHub Actions 在构建时用仓库 Secrets 注入：
+
+- `ACCESSKEY`
+- `ACCESSSECRET`
+- `APPID`
+
+推送 `v*.*.*` 标签，或在 Actions 里手动 `workflow_dispatch`，会构建 Windows 可执行文件并用 `GITHUB_TOKEN` 创建 GitHub Release（无需再配置个人 `ACCESS_TOKEN`）。Linux amd64 为可选附加产物，失败不会挡住 Windows 发布。
+
+本地自行编译（需 Go 1.22+，Fyne 需要 CGO）：
+
+```bash
+go build -ldflags "-w -s"
+# Windows GUI 发布构建：
+# go build -ldflags "-w -s -H=windowsgui"
+```
+
+队列 / 弹幕 HTTP 展示默认先监听 `100` 端口（兼容现有 Windows / OBS 浏览器源）。在 Linux 等非 root 环境若绑定失败，会回退到 `10100`。可用环境变量 `BILILINE_HTTP_PORT` 指定端口。主界面复制的排队 / 弹幕 URL 会使用实际监听端口。音乐插件仍使用 `99` 端口。
+
 
 
 

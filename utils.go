@@ -99,10 +99,11 @@ func SendDmToWs(Dm *proto.CmdDanmuData) {
 
 func SendMusicServer(Path, Keyword string) {
 	for i := 0; i < 3; i++ {
-		get, err := http.Get("http://127.0.0.1:99/" + Path + "?keyword=" + Keyword)
+		get, err := http.Get(musicServerURL("/" + Path + "?keyword=" + Keyword))
 		if err != nil {
 			return
 		}
+		_ = get.Body.Close()
 		if get.StatusCode == 200 {
 			break
 		}
@@ -269,14 +270,23 @@ func AgreeOpenUrl(url string) error {
 func Restart() {
 	exePath, err := os.Executable()
 	if err != nil {
-		fmt.Println("无法获取可执行文件路径:", err)
+		slog.Error("无法获取可执行文件路径", "err", err)
 		return
 	}
-	// 启动新进程来替换当前进程
 	cmd := exec.Command(exePath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err = cmd.Start()
+	if err = cmd.Start(); err != nil {
+		slog.Error("重启失败", "err", err)
+		return
+	}
+	if WsClient != nil {
+		WsClient.Close()
+	}
+	if AppClient != nil && GameId != "" {
+		_ = AppClient.AppEnd(GameId)
+	}
+	os.Exit(0)
 }
 
 func NewHeartbeat(client *live.Client, GameId string, CloseChan chan bool) {
@@ -286,9 +296,9 @@ func NewHeartbeat(client *live.Client, GameId string, CloseChan chan bool) {
 			select {
 			case <-tk.C:
 				if err := client.AppHeartbeat(GameId); err != nil {
-					slog.Error("Heartbeat fail", err)
+					slog.Error("Heartbeat fail", "err", err)
 				} else {
-					slog.Info("Heartbeat Success", GameId)
+					slog.Info("Heartbeat Success", "gameId", GameId)
 				}
 			case <-CloseChan:
 				tk.Stop()

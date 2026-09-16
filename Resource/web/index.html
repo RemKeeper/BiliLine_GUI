@@ -56,6 +56,18 @@
     let NormalLineDiv = document.getElementById('NormalLine')
     // 重连间隔时间
     const RECONNECT_INTERVAL = 5000;
+    function displayBase() {
+        if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+            return window.location.origin;
+        }
+        return "http://127.0.0.1:10100";
+    }
+    function displayHost() {
+        if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+            return window.location.host;
+        }
+        return "127.0.0.1:10100";
+    }
 
 
     // WebSocket实例
@@ -65,7 +77,7 @@
         CleanAllUser();
         GetAllUser();
 
-        let socket = new WebSocket('ws://127.0.0.1:100/LineWs');
+        let socket = new WebSocket((window.location.protocol === "https:" ? "wss://" : "ws://") + displayHost() + "/LineWs");
 
         // 处理消息
         socket.onmessage = (event) => {
@@ -263,7 +275,7 @@
 
     function GetConfig() {
         const Http = new XMLHttpRequest();
-        const Url = "http://127.0.0.1:100/getConfig";
+        const Url = displayBase() + "/getConfig";
         Http.open("GET", Url)
         Http.send()
         Http.onreadystatechange = function () {
@@ -433,7 +445,7 @@
 
     function DetectingTheNumberOfUsers() {
         const Http = new XMLHttpRequest();
-        const Url = "http://127.0.0.1:100/getLineLength";
+        const Url = displayBase() + "/getLineLength";
         Http.open("GET", Url);
         Http.send();
         Http.onreadystatechange = function () {
@@ -457,7 +469,7 @@
 
     function GetAllUser() {
         const Http = new XMLHttpRequest();
-        const Url = "http://127.0.0.1:100/getAllLine"
+        const Url = displayBase() + "/getAllLine"
         Http.open("GET", Url);
         Http.send();
         Http.onreadystatechange = function () {

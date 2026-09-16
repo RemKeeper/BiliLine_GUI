@@ -18,6 +18,7 @@ func CheckVersion() (VersionSct, bool) {
 	if err != nil {
 		return VersionSct{}, false
 	}
+	defer get.Body.Close()
 	all, err := io.ReadAll(get.Body)
 	if err != nil {
 		return VersionSct{}, false

@@ -1,13 +1,15 @@
 package main
 
 import (
+	"image/color"
+	"strconv"
+	"strings"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"image/color"
-	"strconv"
 )
 
 func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
@@ -40,12 +42,19 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	IsOnlyGiftSwitch := widget.NewCheck("是否开启   <!->仅限<-!>   付费用户排队(舰长/礼物)", func(status bool) {
 	})
 
+	var applyingOnlyGift bool
 	IsOnlyGiftSwitch.OnChanged = func(status bool) {
-		if status {
-			dialog.ShowConfirm("警告", "开启后只有舰长和送礼物的用户才能加入队列", func(b bool) {
-				IsOnlyGiftSwitch.SetChecked(status)
-			}, Windows)
+		if applyingOnlyGift {
+			return
 		}
+		if !status {
+			return
+		}
+		dialog.ShowConfirm("警告", "开启后只有舰长和送礼物的用户才能加入队列", func(confirmed bool) {
+			applyingOnlyGift = true
+			IsOnlyGiftSwitch.SetChecked(confirmed)
+			applyingOnlyGift = false
+		}, Windows)
 	}
 
 	IsOnlyGiftSwitch.Checked = Config.IsOnlyGift
@@ -56,7 +65,7 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	}
 
 	Gift := canvas.NewText("礼物用户", color.RGBA{R: 255, G: 255, B: 255, A: 255})
-	if !Config.GuardPrintColor.IsEmpty() {
+	if !Config.GiftPrintColor.IsEmpty() {
 		Gift.Color = Config.GiftPrintColor.ToRGBA()
 	}
 
@@ -80,6 +89,8 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 		MakeSelectColor(Gift),
 		Normal,
 		MakeSelectColor(Normal),
+		DmDisplayColor,
+		MakeSelectColor(DmDisplayColor),
 	)
 
 	GiftPriceInput := widget.NewEntry()
@@ -114,25 +125,54 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 	}
 
 	StartButton := widget.NewButton("保存配置并开始", func() {
-		GiftLinePriceFloat64, err := strconv.ParseFloat(GiftPriceInput.Text, 10)
-		LineMaxLengthInt, err := strconv.Atoi(LineMaxLengthInput.Text)
-		ScrollIntervalInt, err := strconv.Atoi(ScrollIntervalInput.Text)
-
-		switch {
-		case len(IdCodeInput.Text) == 0:
-			dialog.ShowError(DisplayError{Message: "房间号不能为空"}, Windows)
+		if strings.TrimSpace(IdCodeInput.Text) == "" {
+			dialog.ShowError(DisplayError{Message: "身份码不能为空"}, Windows)
 			return
-		case GiftJoinLine.Checked && GiftLinePriceFloat64 <= 0:
-			dialog.ShowError(DisplayError{Message: "礼物价格应该大于0"}, Windows)
-			return
+		}
 
-		case LineMaxLengthInt <= 0:
+		giftLinePrice := Config.GiftLinePrice
+		if GiftJoinLine.Checked {
+			parsedPrice, parseErr := strconv.ParseFloat(strings.TrimSpace(GiftPriceInput.Text), 64)
+			if parseErr != nil || parsedPrice <= 0 {
+				dialog.ShowError(DisplayError{Message: "礼物价格应该大于0"}, Windows)
+				return
+			}
+			giftLinePrice = parsedPrice
+		} else if strings.TrimSpace(GiftPriceInput.Text) != "" {
+			parsedPrice, parseErr := strconv.ParseFloat(strings.TrimSpace(GiftPriceInput.Text), 64)
+			if parseErr != nil {
+				dialog.ShowError(DisplayError{Message: "礼物价格格式错误"}, Windows)
+				return
+			}
+			giftLinePrice = parsedPrice
+		}
+
+		lineMaxLength, err := strconv.Atoi(strings.TrimSpace(LineMaxLengthInput.Text))
+		if err != nil || lineMaxLength <= 0 {
 			dialog.ShowError(DisplayError{Message: "队列最大容量应该大于0"}, Windows)
 			return
 		}
 
-		if LineKeyInput.Text == "" {
-			LineKeyInput.Text = "排队"
+		scrollIntervalSec := Config.ScrollInterval / 2
+		if strings.TrimSpace(ScrollIntervalInput.Text) != "" {
+			scrollIntervalSec, err = strconv.Atoi(strings.TrimSpace(ScrollIntervalInput.Text))
+			if err != nil || scrollIntervalSec <= 0 {
+				dialog.ShowError(DisplayError{Message: "滚动间隔应该大于0"}, Windows)
+				return
+			}
+		}
+		if scrollIntervalSec <= 0 {
+			scrollIntervalSec = 1
+		}
+
+		lineKey := LineKeyInput.Text
+		if lineKey == "" {
+			lineKey = "排队"
+		}
+
+		specialUsers := Config.SpecialUserList
+		if globalConfiguration.SpecialUserList != nil {
+			specialUsers = globalConfiguration.SpecialUserList
 		}
 
 		SaveConfig := RunConfig{
@@ -140,33 +180,29 @@ func MakeConfigUI(Windows fyne.Window, Config RunConfig) *fyne.Container {
 			GuardPrintColor:         ToLineColor(Guard.Color),
 			GiftPriceDisplay:        GiftPriceDisplaySwitch.Checked,
 			GiftPrintColor:          ToLineColor(Gift.Color),
-			GiftLinePrice:           GiftLinePriceFloat64,
+			GiftLinePrice:           giftLinePrice,
 			CommonPrintColor:        ToLineColor(Normal.Color),
 			DmDisplayColor:          ToLineColor(DmDisplayColor.Color),
-			LineKey:                 LineKeyInput.Text,
+			LineKey:                 lineKey,
 			IsOnlyGift:              IsOnlyGiftSwitch.Checked,
 			AutoJoinGiftLine:        GiftJoinLine.Checked,
 			TransparentBackground:   TransparentBackgroundCheck.Checked,
-			MaxLineCount:            LineMaxLengthInt,
+			MaxLineCount:            lineMaxLength,
 			CurrentQueueSizeDisplay: DisplayQueSize.Checked,
 			EnableMusicServer:       EnableMusicServer.Checked,
 			DmDisplayNoSleep:        EnableDmDisplayNoSleep.Checked,
-			ScrollInterval:          ScrollIntervalInt * 2,
+			ScrollInterval:          scrollIntervalSec * 2,
 			AutoScrollLine:          AutoScrollLine.Checked,
+			SpecialUserList:         specialUsers,
 		}
 
 		KeyWordMatchMap = make(map[string]bool)
 		KeyWordMatchInit(SaveConfig.LineKey)
 
-		if err != nil {
-			dialog.ShowError(err, Windows)
-		} else {
-			globalConfiguration = SaveConfig
-			SetConfig(SaveConfig)
-			dialog.ShowInformation("保存成功", "配置已保存,如果涉及身份码修改,请重启", Windows)
-			Restart()
-
-		}
+		globalConfiguration = SaveConfig
+		SetConfig(SaveConfig)
+		dialog.ShowInformation("保存成功", "配置已保存,如果涉及身份码修改,请重启", Windows)
+		Restart()
 	})
 	return container.NewVBox(
 		IdCodeInput,
